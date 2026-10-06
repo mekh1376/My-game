@@ -56,14 +56,12 @@
     </div>
 
     <script>
-        // آدرس اختصاصی گوگل شیت شما
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzOTR4Seq4weCerePZ3yBWCC4O0hU-2DVZepEPWWLfJjcjyYVw2-grjS1JvoPmMhfeM/exec';
 
-        // دریافت اطلاعات کاربر از تلگرام
-        const tg = window.Telegram.WebApp;
-        tg.expand();
+        const tg = window.Telegram?.WebApp;
+        if (tg) tg.expand();
         
-        const user = tg.initDataUnsafe?.user || { id: 'GUEST_' + Math.floor(Math.random()*1000), first_name: 'مهمان', username: 'guest' };
+        const user = tg?.initDataUnsafe?.user || { id: 'GUEST_' + Math.floor(Math.random()*1000), first_name: 'مهمان', username: 'guest' };
 
         const canvas = document.getElementById('wheel');
         const ctx = canvas.getContext('2d');
@@ -92,11 +90,12 @@
             localStorage.setItem('user_coins', coins.toString());
             sendDataToGoogleSheet();
         }
-        updateCoinDisplay();
 
         function drawWheel() {
             const numSegments = items.length;
             const anglePerSegment = (2 * Math.PI) / numSegments;
+            ctx.clearRect(0, 0, 270, 270);
+
             for (let i = 0; i < numSegments; i++) {
                 ctx.beginPath();
                 ctx.fillStyle = colors[i];
@@ -108,12 +107,16 @@
                 ctx.rotate(i * anglePerSegment + anglePerSegment / 2);
                 ctx.textAlign = "right";
                 ctx.fillStyle = "#fff";
-                ctx.font = "bold 14px Tahoma";
+                ctx.font = "bold 14px Tahoma, sans-serif";
                 ctx.fillText(items[i].text, 115, 5);
                 ctx.restore();
             }
         }
-        drawWheel();
+
+        window.onload = function() {
+            drawWheel();
+            updateCoinDisplay();
+        };
 
         function spin() {
             if (isSpinning) return;
@@ -146,3 +149,23 @@
             }, 4000);
         }
 
+        function sendDataToGoogleSheet() {
+            if (!GOOGLE_SCRIPT_URL) return;
+
+            const payload = {
+                userId: user.id,
+                name: user.first_name || 'بدون نام',
+                username: user.username || 'ندارد',
+                coins: coins
+            };
+
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).catch(err => console.log('Error sending to sheet:', err));
+        }
+    </script>
+</body>
+</html>

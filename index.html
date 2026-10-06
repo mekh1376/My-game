@@ -56,12 +56,12 @@
     </div>
 
     <script>
-        // آدرس گوگل شیت خود را در زیر قرار دهید
+        // آدرس اختصاصی گوگل شیت شما
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzOTR4Seq4weCerePZ3yBWCC4O0hU-2DVZepEPWWLfJjcjyYVw2-grjS1JvoPmMhfeM/exec';
 
         // دریافت اطلاعات کاربر از تلگرام
         const tg = window.Telegram.WebApp;
-        tg.expand(); // باز کردن کامل صفحه
+        tg.expand();
         
         const user = tg.initDataUnsafe?.user || { id: 'GUEST_' + Math.floor(Math.random()*1000), first_name: 'مهمان', username: 'guest' };
 
@@ -146,24 +146,3 @@
             }, 4000);
         }
 
-        // ارسال اطلاعات به گوگل شیت
-        function sendDataToGoogleSheet() {
-            if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes('آدرس_لینک')) return;
-
-            const payload = {
-                userId: user.id,
-                name: user.first_name || 'بدون نام',
-                username: user.username || 'ندارد',
-                coins: coins
-            };
-
-            fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            }).catch(err => console.log('Error sending to sheet:', err));
-        }
-    </script>
-</body>
-</html>

@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>گردونه شانس طلایی</title>
+    <!-- اسکریپت تلگرام برای دریافت اطلاعات کاربر -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
         body {
@@ -28,72 +30,15 @@
             border-radius: 25px;
             box-shadow: 0 15px 35px rgba(0,0,0,0.6);
         }
-        h1 {
-            font-size: 22px;
-            color: #f1c40f;
-            text-shadow: 0 0 10px rgba(241, 196, 15, 0.5);
-            margin-bottom: 5px;
-        }
-        .coins-box {
-            background: rgba(0, 0, 0, 0.3);
-            display: inline-block;
-            padding: 8px 20px;
-            border-radius: 20px;
-            font-size: 16px;
-            margin-top: 10px;
-            color: #ffd700;
-            border: 1px solid rgba(255, 215, 0, 0.3);
-        }
-        .wheel-container {
-            position: relative;
-            margin: 25px auto;
-            width: 270px;
-            height: 270px;
-        }
-        .pointer {
-            position: absolute;
-            top: -12px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 14px solid transparent;
-            border-right: 14px solid transparent;
-            border-top: 25px solid #ff4757;
-            z-index: 10;
-            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.6));
-        }
-        #wheel {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            border: 6px solid #f1c40f;
-            box-shadow: 0 0 20px rgba(241, 196, 15, 0.4);
-            transition: transform 4s cubic-bezier(0.15, 0.99, 0.18, 0.99);
-        }
-        button {
-            background: linear-gradient(45deg, #2ed573, #26af5f);
-            color: #fff;
-            border: none;
-            padding: 14px 30px;
-            font-size: 18px;
-            font-weight: bold;
-            border-radius: 50px;
-            cursor: pointer;
-            box-shadow: 0 5px 15px rgba(46, 213, 115, 0.4);
-            transition: 0.3s;
-            margin-top: 10px;
-            width: 100%;
-        }
+        h1 { font-size: 22px; color: #f1c40f; text-shadow: 0 0 10px rgba(241, 196, 15, 0.5); margin-bottom: 5px; }
+        .coins-box { background: rgba(0, 0, 0, 0.3); display: inline-block; padding: 8px 20px; border-radius: 20px; font-size: 16px; margin-top: 10px; color: #ffd700; border: 1px solid rgba(255, 215, 0, 0.3); }
+        .wheel-container { position: relative; margin: 25px auto; width: 270px; height: 270px; }
+        .pointer { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 14px solid transparent; border-right: 14px solid transparent; border-top: 25px solid #ff4757; z-index: 10; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.6)); }
+        #wheel { width: 100%; height: 100%; border-radius: 50%; border: 6px solid #f1c40f; box-shadow: 0 0 20px rgba(241, 196, 15, 0.4); transition: transform 4s cubic-bezier(0.15, 0.99, 0.18, 0.99); }
+        button { background: linear-gradient(45deg, #2ed573, #26af5f); color: #fff; border: none; padding: 14px 30px; font-size: 18px; font-weight: bold; border-radius: 50px; cursor: pointer; box-shadow: 0 5px 15px rgba(46, 213, 115, 0.4); transition: 0.3s; margin-top: 10px; width: 100%; }
         button:active { transform: scale(0.98); }
         button:disabled { background: #57606f; box-shadow: none; cursor: not-allowed; }
-        .result {
-            margin-top: 15px;
-            font-size: 16px;
-            font-weight: bold;
-            min-height: 24px;
-            color: #2ed573;
-        }
+        .result { margin-top: 15px; font-size: 16px; font-weight: bold; min-height: 24px; color: #2ed573; }
     </style>
 </head>
 <body>
@@ -111,10 +56,18 @@
     </div>
 
     <script>
+        // آدرس گوگل شیت خود را در زیر قرار دهید
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzOTR4Seq4weCerePZ3yBWCC4O0hU-2DVZepEPWWLfJjcjyYVw2-grjS1JvoPmMhfeM/exec';
+
+        // دریافت اطلاعات کاربر از تلگرام
+        const tg = window.Telegram.WebApp;
+        tg.expand(); // باز کردن کامل صفحه
+        
+        const user = tg.initDataUnsafe?.user || { id: 'GUEST_' + Math.floor(Math.random()*1000), first_name: 'مهمان', username: 'guest' };
+
         const canvas = document.getElementById('wheel');
         const ctx = canvas.getContext('2d');
         
-        // آیتم‌های جدید و رنگ‌های جذاب‌تر
         const items = [
             { text: '۲۰ سکه', val: 20 },
             { text: 'پوچ ❌', val: 0 },
@@ -137,6 +90,7 @@
         function updateCoinDisplay() {
             document.getElementById('coinCount').innerText = coins;
             localStorage.setItem('user_coins', coins.toString());
+            sendDataToGoogleSheet();
         }
         updateCoinDisplay();
 
@@ -190,6 +144,25 @@
                 
                 updateCoinDisplay();
             }, 4000);
+        }
+
+        // ارسال اطلاعات به گوگل شیت
+        function sendDataToGoogleSheet() {
+            if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes('آدرس_لینک')) return;
+
+            const payload = {
+                userId: user.id,
+                name: user.first_name || 'بدون نام',
+                username: user.username || 'ندارد',
+                coins: coins
+            };
+
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).catch(err => console.log('Error sending to sheet:', err));
         }
     </script>
 </body>

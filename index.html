@@ -18,7 +18,7 @@
             min-height: 100vh;
             text-align: center;
             padding: 15px;
-            overflow: hidden;
+            overflow-x: hidden;
         }
         .container {
             width: 100%;
@@ -26,39 +26,80 @@
             background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 25px 20px;
+            padding: 20px 15px;
             border-radius: 25px;
             box-shadow: 0 15px 35px rgba(0,0,0,0.6);
         }
-        h1 { font-size: 22px; color: #f1c40f; text-shadow: 0 0 10px rgba(241, 196, 15, 0.5); margin-bottom: 5px; }
-        .coins-box { background: rgba(0, 0, 0, 0.3); display: inline-block; padding: 8px 20px; border-radius: 20px; font-size: 16px; margin-top: 10px; color: #ffd700; border: 1px solid rgba(255, 215, 0, 0.3); }
-        .wheel-container { position: relative; margin: 25px auto; width: 270px; height: 270px; }
+        h1 { font-size: 20px; color: #f1c40f; text-shadow: 0 0 10px rgba(241, 196, 15, 0.5); margin-bottom: 5px; }
+        
+        .info-panel {
+            display: flex;
+            justify-content: space-around;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 15px;
+            margin-top: 10px;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            font-size: 14px;
+        }
+        .info-box { display: flex; flex-direction: column; align-items: center; }
+        .info-title { font-size: 11px; color: #aaa; margin-bottom: 3px; }
+        .info-value { font-weight: bold; color: #ffd700; }
+
+        .wheel-container { position: relative; margin: 20px auto; width: 260px; height: 260px; }
         .pointer { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 14px solid transparent; border-right: 14px solid transparent; border-top: 25px solid #ff4757; z-index: 10; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.6)); }
-        #wheel { width: 270px; height: 270px; border-radius: 50%; border: 6px solid #f1c40f; box-shadow: 0 0 20px rgba(241, 196, 15, 0.4); transition: transform 4s cubic-bezier(0.15, 0.99, 0.18, 0.99); }
-        button { background: linear-gradient(45deg, #2ed573, #26af5f); color: #fff; border: none; padding: 14px 30px; font-size: 18px; font-weight: bold; border-radius: 50px; cursor: pointer; box-shadow: 0 5px 15px rgba(46, 213, 115, 0.4); transition: 0.3s; margin-top: 10px; width: 100%; }
+        #wheel { width: 260px; height: 260px; border-radius: 50%; border: 6px solid #f1c40f; box-shadow: 0 0 20px rgba(241, 196, 15, 0.4); transition: transform 4s cubic-bezier(0.15, 0.99, 0.18, 0.99); }
+        
+        .btn-group { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+        button { background: linear-gradient(45deg, #2ed573, #26af5f); color: #fff; border: none; padding: 12px 20px; font-size: 16px; font-weight: bold; border-radius: 50px; cursor: pointer; box-shadow: 0 5px 15px rgba(46, 213, 115, 0.4); transition: 0.3s; width: 100%; }
         button:active { transform: scale(0.98); }
         button:disabled { background: #57606f; box-shadow: none; cursor: not-allowed; }
-        .result { margin-top: 15px; font-size: 16px; font-weight: bold; min-height: 24px; color: #2ed573; }
+        
+        .btn-buy { background: linear-gradient(45deg, #ff9f43, #ee5253); box-shadow: 0 5px 15px rgba(238, 82, 83, 0.4); }
+        .btn-invite { background: linear-gradient(45deg, #0abde3, #10ac84); box-shadow: 0 5px 15px rgba(10, 189, 227, 0.4); }
+
+        .result { margin-top: 12px; font-size: 15px; font-weight: bold; min-height: 22px; color: #2ed573; }
+        .timer-text { font-size: 12px; color: #ffa502; margin-top: 5px; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>✨ گردونه شانس طلایی ✨</h1>
-        <div class="coins-box">💰 موجودی: <span id="coinCount">0</span> سکه</div>
         
+        <div class="info-panel">
+            <div class="info-box">
+                <span class="info-title">💰 موجودی</span>
+                <span class="info-value"><span id="coinCount">0</span> سکه</span>
+            </div>
+            <div class="info-box">
+                <span class="info-title">🎰 شانس باقی‌مانده</span>
+                <span class="info-value"><span id="spinsLeft">0</span> بار</span>
+            </div>
+        </div>
+
         <div class="wheel-container">
             <div class="pointer"></div>
-            <canvas id="wheel" width="270" height="270"></canvas>
+            <canvas id="wheel" width="260" height="260"></canvas>
         </div>
         
-        <button id="spinBtn" onclick="spin()">بچرخون!</button>
         <div class="result" id="resultText"></div>
+        <div class="timer-text" id="timerText"></div>
+
+        <div class="btn-group">
+            <button id="spinBtn" onclick="spin()">بچرخون! 🎲</button>
+            <button class="btn-invite" onclick="shareInviteLink()">👥 دعوت از دوستان (+۲ شانس)</button>
+            <button class="btn-buy" onclick="buySpins()">🛒 خرید شانس بیشتر</button>
+        </div>
     </div>
 
     <script>
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzOTR4Seq4weCerePZ3yBWCC4O0hU-2DVZepEPWWLfJjcjyYVw2-grjS1JvoPmMhfeM/exec';
 
-        // مقداردهی اولیه تلگرام
+        // آیدی ربات تلگرام خودتون بدون @ (مثال: my_lucky_bot)
+        const BOT_USERNAME = 'نام_کاربری_ربات_شما'; 
+        // لینک پرداخت زرین‌پال، آیدی‌پی یا کارت به کارت شما
+        const PAYMENT_URL = 'https://zarinp.al/your_link'; 
+
         let telegramUser = null;
         if (window.Telegram && window.Telegram.WebApp) {
             window.Telegram.WebApp.ready();
@@ -68,10 +109,61 @@
             }
         }
 
-        // استخراج اطلاعات کاربر
         const userId = telegramUser ? telegramUser.id : ('GUEST_' + Math.floor(Math.random()*1000));
         const userName = telegramUser ? ((telegramUser.first_name || '') + ' ' + (telegramUser.last_name || '')).trim() : 'مهمان';
         const userUsername = telegramUser ? (telegramUser.username ? '@' + telegramUser.username : 'ندارد') : 'guest';
+
+        // ذخیره‌سازی حافظه کاربر
+        let coins = parseInt(localStorage.getItem('user_coins_' + userId)) || 0;
+        let spins = parseInt(localStorage.getItem('user_spins_' + userId));
+        let lastDailyClaim = parseInt(localStorage.getItem('last_daily_claim_' + userId)) || 0;
+
+        // ورود برای بار اول: ۳ شانس اولیه
+        if (isNaN(spins)) {
+            spins = 3;
+            localStorage.setItem('user_spins_' + userId, spins);
+        }
+
+        // بررسی شانس ۲۴ ساعته
+        function checkDailyBonus() {
+            const now = Date.now();
+            const twentyFourHours = 24 * 60 * 60 * 1000;
+
+            if (now - lastDailyClaim >= twentyFourHours) {
+                spins += 1;
+                lastDailyClaim = now;
+                localStorage.setItem('user_spins_' + userId, spins);
+                localStorage.setItem('last_daily_claim_' + userId, lastDailyClaim);
+            }
+            updateUI();
+            updateTimer();
+        }
+
+        function updateTimer() {
+            const now = Date.now();
+            const twentyFourHours = 24 * 60 * 60 * 1000;
+            const diff = twentyFourHours - (now - lastDailyClaim);
+
+            if (diff > 0) {
+                const hours = Math.floor(diff / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                document.getElementById('timerText').innerText = `🎁 شانس رایگان بعدی در: ${hours}:${minutes}:${seconds}`;
+            } else {
+                document.getElementById('timerText').innerText = `🎁 شانس رایگان جدید دریافت شد!`;
+            }
+        }
+
+        setInterval(updateTimer, 1000);
+
+        function updateUI() {
+            document.getElementById('coinCount').innerText = coins;
+            document.getElementById('spinsLeft').innerText = spins;
+            localStorage.setItem('user_coins_' + userId, coins.toString());
+            localStorage.setItem('user_spins_' + userId, spins.toString());
+            
+            document.getElementById('spinBtn').disabled = spins <= 0;
+        }
 
         const canvas = document.getElementById('wheel');
         const ctx = canvas.getContext('2d');
@@ -90,46 +182,40 @@
         const colors = ['#ff4757', '#2e86de', '#9b59b6', '#f1c40f', '#e67e22', '#1abc9c', '#341f97', '#ff6b6b'];
         let currentRotation = 0;
         let isSpinning = false;
-        
-        let storedCoins = localStorage.getItem('user_coins');
-        let coins = parseInt(storedCoins);
-        if (isNaN(coins)) coins = 0;
-
-        function updateCoinDisplay() {
-            document.getElementById('coinCount').innerText = coins;
-            localStorage.setItem('user_coins', coins.toString());
-        }
 
         function drawWheel() {
             const numSegments = items.length;
             const anglePerSegment = (2 * Math.PI) / numSegments;
             
-            ctx.clearRect(0, 0, 270, 270);
+            ctx.clearRect(0, 0, 260, 260);
 
             for (let i = 0; i < numSegments; i++) {
                 ctx.beginPath();
                 ctx.fillStyle = colors[i];
-                ctx.moveTo(135, 135);
-                ctx.arc(135, 135, 135, i * anglePerSegment, (i + 1) * anglePerSegment);
+                ctx.moveTo(130, 130);
+                ctx.arc(130, 130, 130, i * anglePerSegment, (i + 1) * anglePerSegment);
                 ctx.fill();
                 
                 ctx.save();
-                ctx.translate(135, 135);
+                ctx.translate(130, 130);
                 ctx.rotate(i * anglePerSegment + anglePerSegment / 2);
                 ctx.textAlign = "right";
                 ctx.fillStyle = "#ffffff";
-                ctx.font = "bold 13px Tahoma, Arial";
-                ctx.fillText(items[i].text, 115, 5);
+                ctx.font = "bold 12px Tahoma, Arial";
+                ctx.fillText(items[i].text, 110, 4);
                 ctx.restore();
             }
         }
 
         drawWheel();
-        updateCoinDisplay();
+        checkDailyBonus();
 
         function spin() {
-            if (isSpinning) return;
+            if (isSpinning || spins <= 0) return;
             isSpinning = true;
+            spins--;
+            updateUI();
+
             document.getElementById('spinBtn').disabled = true;
             document.getElementById('resultText').innerText = 'در حال چرخش... 🎲';
 
@@ -139,7 +225,6 @@
 
             setTimeout(() => {
                 isSpinning = false;
-                document.getElementById('spinBtn').disabled = false;
                 
                 const actualDegrees = currentRotation % 360;
                 const segmentAngle = 360 / items.length;
@@ -154,7 +239,7 @@
                     coins = coins > 0 ? coins * 2 : 20;
                 }
                 
-                updateCoinDisplay();
+                updateUI();
                 sendDataToGoogleSheet();
             }, 4000);
         }
@@ -175,6 +260,27 @@
                 headers: { 'Content-Type': 'text/plain' },
                 body: JSON.stringify(payload)
             }).catch(err => console.log('Sheet Error:', err));
+        }
+
+        // دکمه دعوت از دوست
+        function shareInviteLink() {
+            const inviteUrl = `https://t.me/share/url?url=https://t.me/${BOT_USERNAME}&text=بیا%20تو%20این%20مینی‌آپ%20گردونه%20شانس%20رو%20بچرخون%20و%20سکه%20برنده%20شو!%20🎁`;
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.openTelegramLink(inviteUrl);
+            } else {
+                window.open(inviteUrl, '_blank');
+            }
+        }
+
+        // دکمه خرید شانس
+        function buySpins() {
+            if (confirm('آیا می‌خواهید با پرداخت، ۵ شانس جدید خریداری کنید؟')) {
+                if (window.Telegram && window.Telegram.WebApp) {
+                    window.Telegram.WebApp.openLink(PAYMENT_URL);
+                } else {
+                    window.open(PAYMENT_URL, '_blank');
+                }
+            }
         }
     </script>
 </body>

@@ -46,12 +46,15 @@
         .info-title { font-size: 11px; color: #aaa; margin-bottom: 3px; }
         .info-value { font-weight: bold; color: #ffd700; }
 
+        /* استایل تایمر معکوس */
         .timer-box {
-            margin-top: 10px;
-            font-size: 12px;
+            margin-top: 12px;
+            font-size: 13px;
+            font-weight: bold;
             color: #00d2d3;
-            background: rgba(0, 210, 211, 0.1);
-            padding: 6px;
+            background: rgba(0, 210, 211, 0.15);
+            border: 1px solid rgba(0, 210, 211, 0.4);
+            padding: 8px;
             border-radius: 10px;
             display: none;
         }
@@ -61,10 +64,11 @@
         #wheel { width: 260px; height: 260px; border-radius: 50%; border: 6px solid #f1c40f; box-shadow: 0 0 20px rgba(241, 196, 15, 0.4); transition: transform 4s cubic-bezier(0.15, 0.99, 0.18, 0.99); }
         
         .btn-group { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
-        button { background: linear-gradient(45deg, #2ed573, #26af5f); color: #fff; border: none; padding: 12px 20px; font-size: 16px; font-weight: bold; border-radius: 50px; cursor: pointer; box-shadow: 0 5px 15px rgba(46, 213, 115, 0.4); transition: 0.3s; width: 100%; }
+        button { background: linear-gradient(45deg, #2ed573, #26af5f); color: #fff; border: none; padding: 12px 20px; font-size: 15px; font-weight: bold; border-radius: 50px; cursor: pointer; box-shadow: 0 5px 15px rgba(46, 213, 115, 0.4); transition: 0.3s; width: 100%; }
         button:active { transform: scale(0.98); }
-        button:disabled { background: #57606f; box-shadow: none; cursor: not-allowed; }
+        button:disabled { background: #57606f; box-shadow: none; cursor: not-allowed; opacity: 0.6; }
         
+        .btn-leaderboard { background: linear-gradient(45deg, #f1c40f, #f39c12); box-shadow: 0 5px 15px rgba(241, 196, 15, 0.4); color: #000; }
         .btn-buy { background: linear-gradient(45deg, #ff9f43, #ee5253); box-shadow: 0 5px 15px rgba(238, 82, 83, 0.4); }
         .btn-invite { background: linear-gradient(45deg, #0abde3, #10ac84); box-shadow: 0 5px 15px rgba(10, 189, 227, 0.4); }
 
@@ -73,13 +77,14 @@
 
         .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(5px); z-index: 100;
+            background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(5px); z-index: 100;
             justify-content: center; align-items: center; padding: 20px;
         }
         .modal-content {
-            background: #1b2735; border: 1px solid #ffd700; border-radius: 20px; padding: 20px; width: 100%; max-width: 320px; text-align: center;
+            background: #1b2735; border: 1px solid #ffd700; border-radius: 20px; padding: 20px; width: 100%; max-width: 340px; text-align: center; max-height: 85vh; overflow-y: auto;
         }
         .modal-title { font-size: 18px; color: #ffd700; margin-bottom: 15px; }
+        
         .package-item {
             background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 215, 0, 0.3);
             border-radius: 12px; padding: 10px; margin-bottom: 10px; display: flex;
@@ -89,6 +94,20 @@
         .package-name { font-weight: bold; color: #fff; font-size: 14px; }
         .package-price { color: #2ed573; font-weight: bold; font-size: 14px; }
         .close-btn { background: #ff4757; margin-top: 10px; padding: 8px; font-size: 14px; }
+
+        /* استایل جدول رتبه‌بندی */
+        .leaderboard-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
+        .leaderboard-item {
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(255, 255, 255, 0.05); padding: 8px 12px; border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.08); font-size: 13px;
+        }
+        .leaderboard-item.top-1 { border-color: #ffd700; background: rgba(255, 215, 0, 0.15); }
+        .leaderboard-item.top-2 { border-color: #c0c0c0; background: rgba(192, 192, 192, 0.15); }
+        .leaderboard-item.top-3 { border-color: #cd7f32; background: rgba(205, 127, 50, 0.15); }
+        .rank-num { font-weight: bold; width: 25px; text-align: right; }
+        .player-name { flex-grow: 1; text-align: right; padding: 0 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .player-coins { font-weight: bold; color: #ffd700; }
     </style>
 </head>
 <body>
@@ -103,10 +122,11 @@
             </div>
             <div class="info-box">
                 <span class="info-title">🎰 شانس باقی‌مانده</span>
-                <span class="info-value"><span id="spinsLeft">3</span> بار</span>
+                <span class="info-value"><span id="spinsLeft">0</span> بار</span>
             </div>
         </div>
 
+        <!-- باکس تایمر معکوس -->
         <div id="timerBox" class="timer-box">
             ⏳ دریافت شانس رایگان بعدی: <span id="countdown">--:--:--</span>
         </div>
@@ -120,8 +140,20 @@
 
         <div class="btn-group">
             <button id="spinBtn" onclick="spin()">بچرخون! 🎲</button>
+            <button class="btn-leaderboard" onclick="openLeaderboard()">🏆 جدول رتبه‌بندی</button>
             <button class="btn-invite" onclick="shareInviteLink()">👥 دعوت از دوستان (+۲ شانس)</button>
             <button class="btn-buy" onclick="openBuyModal()">🛒 خرید شانس بیشتر</button>
+        </div>
+    </div>
+
+    <!-- پاپ‌آپ رتبه‌بندی -->
+    <div class="modal" id="leaderboardModal">
+        <div class="modal-content">
+            <div class="modal-title">🏆 برترین کاربران (بر اساس سکه)</div>
+            <div id="leaderboardList" class="leaderboard-list">
+                <div style="color: #aaa; font-size: 13px;">در حال دریافت اطلاعات...</div>
+            </div>
+            <button class="close-btn" onclick="closeLeaderboard()">بستن</button>
         </div>
     </div>
 
@@ -153,12 +185,13 @@
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby54tOaKv8Fu1DiyLD66wuCtXRKgBoChREogCCmQEooNxeXNNXroGXa0XeWAqo6jLl_pg/exec';
         const BOT_USERNAME = 'LuckiyiyBot';
         const SUPPORT_USERNAME = 'luckiy_support';
+        const COOLDOWN_TIME = 24 * 60 * 60 * 1000; // ۲۴ ساعت به میلی‌ثانیه
 
         let userId = '';
         let userName = 'مهمان';
         let userUsername = 'guest';
 
-        // مقداردهی اولیه و شناسایی کاربر
+        // مقداردهی و شناسایی کاربر
         function initUser() {
             const tg = window.Telegram ? window.Telegram.WebApp : null;
             if (tg) {
@@ -168,11 +201,10 @@
 
             if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
                 const user = tg.initDataUnsafe.user;
-                userId = user.id.toString();
+                userId = 'TG_' + user.id.toString();
                 userName = ((user.first_name || '') + ' ' + (user.last_name || '')).trim();
                 userUsername = user.username ? '@' + user.username : 'ندارد';
             } else {
-                // اگر در مرورگر تست می‌شود، یک آی‌دی ثابت در localStorage بساز تا با ریلود تغییر نکند
                 let savedGuestId = localStorage.getItem('persistent_guest_id');
                 if (!savedGuestId) {
                     savedGuestId = 'GUEST_' + Math.floor(100000 + Math.random() * 900000);
@@ -186,6 +218,7 @@
 
         initUser();
 
+        // دریافت اطلاعات ذخیره شده کاربر
         let coins = parseInt(localStorage.getItem('coins_' + userId)) || 0;
         let spins = parseInt(localStorage.getItem('spins_' + userId));
         if (isNaN(spins)) spins = 3;
@@ -200,54 +233,55 @@
             localStorage.setItem('lastSpin_' + userId, lastSpinTime.toString());
 
             document.getElementById('spinBtn').disabled = spins <= 0;
-            checkDailyReset();
+            saveLocalLeaderboardData();
         }
 
-        function checkDailyReset() {
-            const now = Date.now();
-            const twentyFourHours = 24 * 60 * 60 * 1000;
+        // ذخیره اطلاعات کاربر جاری در حافظه رتبه‌بندی محلی
+        function saveLocalLeaderboardData() {
+            let allUsers = JSON.parse(localStorage.getItem('global_leaderboard') || '[]');
+            let existingIdx = allUsers.findIndex(u => u.userId === userId);
             
-            if (spins <= 0 && lastSpinTime > 0) {
-                const diff = now - lastSpinTime;
-                if (diff >= twentyFourHours) {
-                    spins = 3;
-                    lastSpinTime = 0;
-                    document.getElementById('timerBox').style.display = 'none';
-                    updateUI();
-                    saveDataToGoogleSheet();
-                } else {
-                    document.getElementById('timerBox').style.display = 'block';
-                    startCountdown(twentyFourHours - diff);
-                }
+            if (existingIdx > -1) {
+                allUsers[existingIdx].coins = coins;
+                allUsers[existingIdx].name = userName;
             } else {
-                document.getElementById('timerBox').style.display = 'none';
+                allUsers.push({ userId: userId, name: userName, coins: coins });
             }
+            
+            localStorage.setItem('global_leaderboard', JSON.stringify(allUsers));
         }
 
-        let countdownInterval = null;
-        function startCountdown(ms) {
-            if (countdownInterval) clearInterval(countdownInterval);
-            
-            function tick() {
-                if (ms <= 0) {
-                    clearInterval(countdownInterval);
-                    spins = 3;
-                    lastSpinTime = 0;
-                    updateUI();
-                    saveDataToGoogleSheet();
-                    return;
-                }
-                const h = Math.floor(ms / (1000 * 60 * 60));
-                const m = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
-                const s = Math.floor((ms % (1000 * 60)) / 1000);
-                
+        // منطق دائمی تایمر معکوس ۲۴ ساعته
+        function checkAndRunTimer() {
+            const now = Date.now();
+            const timePassed = now - lastSpinTime;
+            const timeLeft = COOLDOWN_TIME - timePassed;
+
+            const timerBox = document.getElementById('timerBox');
+
+            if (spins === 0 && lastSpinTime > 0 && timeLeft > 0) {
+                timerBox.style.display = 'block';
+
+                const h = Math.floor(timeLeft / (1000 * 60 * 60));
+                const m = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                const s = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
                 document.getElementById('countdown').innerText = 
                     `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-                ms -= 1000;
+            } 
+            else if (spins === 0 && lastSpinTime > 0 && timeLeft <= 0) {
+                spins = 3;
+                lastSpinTime = 0;
+                timerBox.style.display = 'none';
+                updateUI();
+                saveDataToGoogleSheet();
+            } 
+            else {
+                timerBox.style.display = 'none';
             }
-            tick();
-            countdownInterval = setInterval(tick, 1000);
         }
+
+        setInterval(checkAndRunTimer, 1000);
 
         function saveDataToGoogleSheet() {
             if (!GOOGLE_SCRIPT_URL) return;
@@ -281,12 +315,15 @@
                         saveDataToGoogleSheet();
                     }
                     updateUI();
+                    checkAndRunTimer();
                 })
                 .catch(err => {
                     updateUI();
+                    checkAndRunTimer();
                 });
         }
 
+        // رسم گردونه
         const canvas = document.getElementById('wheel');
         const ctx = canvas.getContext('2d');
         
@@ -330,6 +367,7 @@
 
         drawWheel();
         updateUI();
+        checkAndRunTimer();
         loadUserData();
 
         function spin() {
@@ -342,6 +380,7 @@
             }
 
             updateUI();
+            checkAndRunTimer();
 
             document.getElementById('spinBtn').disabled = true;
             document.getElementById('resultText').innerText = 'در حال چرخش... 🎲';
@@ -367,8 +406,46 @@
                 }
                 
                 updateUI();
+                checkAndRunTimer();
                 saveDataToGoogleSheet();
             }, 4000);
+        }
+
+        // بخش جدید: مدیریت جدول رتبه‌بندی
+        function openLeaderboard() {
+            document.getElementById('leaderboardModal').style.display = 'flex';
+            const listContainer = document.getElementById('leaderboardList');
+            listContainer.innerHTML = '<div style="color: #aaa; font-size: 13px;">در حال بروزرسانی رتبه‌ها...</div>';
+
+            let users = JSON.parse(localStorage.getItem('global_leaderboard') || '[]');
+            
+            // مرتب‌سازی بر اساس بیشترین سکه
+            users.sort((a, b) => b.coins - a.coins);
+
+            if (users.length === 0) {
+                listContainer.innerHTML = '<div style="color: #aaa;">هیچ رتبه‌ای ثبت نشده است.</div>';
+                return;
+            }
+
+            let html = '';
+            users.slice(0, 10).forEach((u, index) => {
+                let topClass = index === 0 ? 'top-1' : (index === 1 ? 'top-2' : (index === 2 ? 'top-3' : ''));
+                let medal = index === 0 ? '🥇 ' : (index === 1 ? '🥈 ' : (index === 2 ? '🥉 ' : ''));
+                
+                html += `
+                    <div class="leaderboard-item ${topClass}">
+                        <span class="rank-num">${index + 1}</span>
+                        <span class="player-name">${medal}${u.name}</span>
+                        <span class="player-coins">${u.coins} سکه</span>
+                    </div>
+                `;
+            });
+
+            listContainer.innerHTML = html;
+        }
+
+        function closeLeaderboard() {
+            document.getElementById('leaderboardModal').style.display = 'none';
         }
 
         function shareInviteLink() {

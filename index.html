@@ -83,3 +83,183 @@
             text-align: center;
         }
         .modal-title { font-size: 18px; color: #ffd700; margin-bottom: 15px; }
+        .package-item {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 12px;
+            padding: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .package-item:hover { background: rgba(255, 215, 0, 0.2); }
+        .package-name { font-weight: bold; color: #fff; font-size: 14px; }
+        .package-price { color: #2ed573; font-weight: bold; font-size: 14px; }
+        .close-btn { background: #ff4757; margin-top: 10px; padding: 8px; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✨ گردونه شانس طلایی ✨</h1>
+        <div id="loadingStatus" class="loading-status">در حال دریافت اطلاعات... 🔄</div>
+        
+        <div class="info-panel">
+            <div class="info-box">
+                <span class="info-title">💰 موجودی</span>
+                <span class="info-value"><span id="coinCount">0</span> سکه</span>
+            </div>
+            <div class="info-box">
+                <span class="info-title">🎰 شانس باقی‌مانده</span>
+                <span class="info-value"><span id="spinsLeft">0</span> بار</span>
+            </div>
+        </div>
+
+        <div class="wheel-container">
+            <div class="pointer"></div>
+            <canvas id="wheel" width="260" height="260"></canvas>
+        </div>
+        
+        <div class="result" id="resultText"></div>
+
+        <div class="btn-group">
+            <button id="spinBtn" onclick="spin()" disabled>بچرخون! 🎲</button>
+            <button class="btn-invite" onclick="shareInviteLink()">👥 دعوت از دوستان (+۲ شانس)</button>
+            <button class="btn-buy" onclick="openBuyModal()">🛒 خرید شانس بیشتر</button>
+        </div>
+    </div>
+
+    <!-- پاپ‌آپ بسته‌های خرید -->
+    <div class="modal" id="buyModal">
+        <div class="modal-content">
+            <div class="modal-title">🛒 انتخاب بسته شانس</div>
+            
+            <div class="package-item" onclick="selectPackage('۳ شانس', '۱۵,۰۰۰ تومان')">
+                <span class="package-name">🎯 ۳ شانس</span>
+                <span class="package-price">۱۵,۰۰۰ تومان</span>
+            </div>
+            <div class="package-item" onclick="selectPackage('۵ شانس', '۲۳,۰۰۰ تومان')">
+                <span class="package-name">🎯 ۵ شانس</span>
+                <span class="package-price">۲۳,۰۰۰ تومان</span>
+            </div>
+            <div class="package-item" onclick="selectPackage('۷ شانس', '۳۰,۰۰۰ تومان')">
+                <span class="package-name">🎯 ۷ شانس</span>
+                <span class="package-price">۳۰,۰۰۰ تومان</span>
+            </div>
+            <div class="package-item" onclick="selectPackage('۱۰ شانس', '۴۲,۰۰۰ تومان')">
+                <span class="package-name">🔥 ۱۰ شانس</span>
+                <span class="package-price">۴۲,۰۰۰ تومان</span>
+            </div>
+
+            <button class="close-btn" onclick="closeBuyModal()">انصراف / بستن</button>
+        </div>
+    </div>
+
+    <script>
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby54tOaKv8Fu1DiyLD66wuCtXRKgBoChREogCCmQEooNxeXNNXroGXa0XeWAqo6jLl_pg/exec';
+        const BOT_USERNAME = 'LuckiyiyBot';
+        const SUPPORT_USERNAME = 'luckiy_support';
+
+        let telegramUser = null;
+        if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.ready();
+            window.Telegram.WebApp.expand();
+            if (window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+                telegramUser = window.Telegram.WebApp.initDataUnsafe.user;
+            }
+        }
+
+        const userId = telegramUser ? telegramUser.id : ('GUEST_' + Math.floor(Math.random()*1000));
+        const userName = telegramUser ? ((telegramUser.first_name || '') + ' ' + (telegramUser.last_name || '')).trim() : 'مهمان';
+        const userUsername = telegramUser ? (telegramUser.username ? '@' + telegramUser.username : 'ندارد') : 'guest';
+
+        let coins = parseInt(localStorage.getItem('user_coins_' + userId)) || 0;
+        let spins = parseInt(localStorage.getItem('user_spins_' + userId)) || 3;
+
+        function updateUI() {
+            document.getElementById('coinCount').innerText = coins;
+            document.getElementById('spinsLeft').innerText = spins;
+            localStorage.setItem('user_coins_' + userId, coins.toString());
+            localStorage.setItem('user_spins_' + userId, spins.toString());
+            document.getElementById('spinBtn').disabled = spins <= 0;
+        }
+
+        function loadUserData() {
+            if (!GOOGLE_SCRIPT_URL) return;
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+            fetch(`${GOOGLE_SCRIPT_URL}?userId=${userId}`, { signal: controller.signal })
+                .then(res => res.json())
+                .then(data => {
+                    clearTimeout(timeoutId);
+                    if (data.status === 'success') {
+                        coins = parseInt(data.coins) || 0;
+                        spins = parseInt(data.spins) || 0;
+                    } else {
+                        saveDataToGoogleSheet();
+                    }
+                    document.getElementById('loadingStatus').style.display = 'none';
+                    updateUI();
+                })
+                .catch(err => {
+                    clearTimeout(timeoutId);
+                    document.getElementById('loadingStatus').innerText = '⚡ حالت آنلاین آماده';
+                    setTimeout(() => {
+                        document.getElementById('loadingStatus').style.display = 'none';
+                    }, 2000);
+                    updateUI();
+                });
+        }
+
+        const canvas = document.getElementById('wheel');
+        const ctx = canvas.getContext('2d');
+        
+        const items = [
+            { text: '۲۰ سکه', val: 20 },
+            { text: 'پوچ ❌', val: 0 },
+            { text: '۵۰ سکه', val: 50 },
+            { text: '۱۰ سکه', val: 10 },
+            { text: '۱۰۰ سکه 🔥', val: 100 },
+            { text: 'پوچ ❌', val: 0 },
+            { text: '۲ برابر ⚡', val: '2x' },
+            { text: '۵ سکه', val: 5 }
+        ];
+        
+        const colors = ['#ff4757', '#2e86de', '#9b59b6', '#f1c40f', '#e67e22', '#1abc9c', '#341f97', '#ff6b6b'];
+        let currentRotation = 0;
+        let isSpinning = false;
+
+        function drawWheel() {
+            const numSegments = items.length;
+            const anglePerSegment = (2 * Math.PI) / numSegments;
+            
+            ctx.clearRect(0, 0, 260, 260);
+
+            for (let i = 0; i < numSegments; i++) {
+                ctx.beginPath();
+                ctx.fillStyle = colors[i];
+                ctx.moveTo(130, 130);
+                ctx.arc(130, 130, 130, i * anglePerSegment, (i + 1) * anglePerSegment);
+                ctx.fill();
+                
+                ctx.save();
+                ctx.translate(130, 130);
+                ctx.rotate(i * anglePerSegment + anglePerSegment / 2);
+                ctx.textAlign = "right";
+                ctx.fillStyle = "#ffffff";
+                ctx.font = "bold 12px Tahoma, Arial";
+                ctx.fillText(items[i].text, 110, 4);
+                ctx.restore();
+            }
+        }
+
+        drawWheel();
+        updateUI();
+        loadUserData();
+
+        function spin() {
+            if (isSpinning || spins <= 0) return;

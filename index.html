@@ -104,7 +104,7 @@
 <body>
     <div class="container">
         <h1>✨ گردونه شانس طلایی ✨</h1>
-        <div id="loadingStatus" class="loading-status">در حال دریافت اطلاعات... 🔄</div>
+        <div id="loadingStatus" class="loading-status">در حال به‌روزرسانی موجودی... 🔄</div>
         
         <div class="info-panel">
             <div class="info-box">
@@ -113,7 +113,7 @@
             </div>
             <div class="info-box">
                 <span class="info-title">🎰 شانس باقی‌مانده</span>
-                <span class="info-value"><span id="spinsLeft">0</span> بار</span>
+                <span class="info-value"><span id="spinsLeft">3</span> بار</span>
             </div>
         </div>
 
@@ -125,7 +125,7 @@
         <div class="result" id="resultText"></div>
 
         <div class="btn-group">
-            <button id="spinBtn" onclick="spin()" disabled>بچرخون! 🎲</button>
+            <button id="spinBtn" onclick="spin()">بچرخون! 🎲</button>
             <button class="btn-invite" onclick="shareInviteLink()">👥 دعوت از دوستان (+۲ شانس)</button>
             <button class="btn-buy" onclick="openBuyModal()">🛒 خرید شانس بیشتر</button>
         </div>
@@ -176,7 +176,8 @@
         const userUsername = telegramUser ? (telegramUser.username ? '@' + telegramUser.username : 'ندارد') : 'guest';
 
         let coins = parseInt(localStorage.getItem('user_coins_' + userId)) || 0;
-        let spins = parseInt(localStorage.getItem('user_spins_' + userId)) || 3;
+        let spins = parseInt(localStorage.getItem('user_spins_' + userId));
+        if (isNaN(spins)) spins = 3;
 
         function updateUI() {
             document.getElementById('coinCount').innerText = coins;
@@ -186,17 +187,30 @@
             document.getElementById('spinBtn').disabled = spins <= 0;
         }
 
+        function saveDataToGoogleSheet() {
+            if (!GOOGLE_SCRIPT_URL) return;
+            const payload = {
+                userId: userId,
+                name: userName,
+                username: userUsername,
+                coins: coins,
+                spins: spins
+            };
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify(payload)
+            }).catch(err => console.log('Sheet Save Error:', err));
+        }
+
         function loadUserData() {
             if (!GOOGLE_SCRIPT_URL) return;
 
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 4000);
-
-            fetch(`${GOOGLE_SCRIPT_URL}?userId=${userId}`, { signal: controller.signal })
+            fetch(`${GOOGLE_SCRIPT_URL}?userId=${userId}`)
                 .then(res => res.json())
                 .then(data => {
-                    clearTimeout(timeoutId);
-                    if (data.status === 'success') {
+                    if (data && data.status === 'success') {
                         coins = parseInt(data.coins) || 0;
                         spins = parseInt(data.spins) || 0;
                     } else {
@@ -206,11 +220,8 @@
                     updateUI();
                 })
                 .catch(err => {
-                    clearTimeout(timeoutId);
-                    document.getElementById('loadingStatus').innerText = '⚡ حالت آنلاین آماده';
-                    setTimeout(() => {
-                        document.getElementById('loadingStatus').style.display = 'none';
-                    }, 2000);
+                    console.log('Error loading data:', err);
+                    document.getElementById('loadingStatus').style.display = 'none';
                     updateUI();
                 });
         }
@@ -257,9 +268,77 @@
             }
         }
 
+        // ۲. رسم اولیه و آپدیت UI فوری
         drawWheel();
         updateUI();
+
+        // ۳. لود اطلاعات از گوگل شیت در پس‌زمینه
         loadUserData();
 
         function spin() {
             if (isSpinning || spins <= 0) return;
+            isSpinning = true;
+            spins--;
+            updateUI();
+
+            document.getElementById('spinBtn').disabled = true;
+            document.getElementById('resultText').innerText = 'در حال چرخش... 🎲';
+
+            const extraDegrees = Math.floor(Math.random() * 360) + 1440;
+            currentRotation += extraDegrees;
+            canvas.style.transform = `rotate(${currentRotation}deg)`;
+
+            setTimeout(() => {
+                isSpinning = false;
+                
+                const actualDegrees = currentRotation % 360;
+                const segmentAngle = 360 / items.length;
+                const index = Math.floor((360 - (actualDegrees % 360) + 270) % 360 / segmentAngle);
+                const prize = items[index];
+
+                document.getElementById('resultText').innerText = `🎉 برنده شدید: ${prize.text}`;
+
+                if (typeof prize.val === 'number') {
+                    coins += prize.val;
+                } else if (prize.val === '2x') {
+                    coins = coins > 0 ? coins * 2 : 20;
+                }
+                
+                updateUI();
+                saveDataToGoogleSheet();
+            }, 4000);
+        }
+
+        function shareInviteLink() {
+            const shareText = "فکر می‌کنی شانس کی بیشتره؟ 😉 بیا گردونه شانس رو بچرخون ببینم چقدر سکه می‌تونی برنده بشی! کلیک کن و شانس امروزت رو بگیر 🔥👇";
+            const inviteUrl = `https://t.me/share/url?url=https://t.me/${BOT_USERNAME}&text=${encodeURIComponent(shareText)}`;
+            
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.openTelegramLink(inviteUrl);
+            } else {
+                window.open(inviteUrl, '_blank');
+            }
+        }
+
+        function openBuyModal() {
+            document.getElementById('buyModal').style.display = 'flex';
+        }
+
+        function closeBuyModal() {
+            document.getElementById('buyModal').style.display = 'none';
+        }
+
+        function selectPackage(title, price) {
+            closeBuyModal();
+            const message = `سلام، درخواست خرید بسته گردونه شانس دارم:%0A%0A👤 نام: ${userName}%0A🆔 آیدی عددی: ${userId}%0A📦 بسته: ${title}%0A💰 قیمت: ${price}`;
+            const targetLink = `https://t.me/${SUPPORT_USERNAME}?text=${message}`;
+            
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.openTelegramLink(targetLink);
+            } else {
+                window.open(targetLink, '_blank');
+            }
+        }
+    </script>
+</body>
+</html>

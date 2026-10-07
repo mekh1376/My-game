@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>گردونه شانس طلایی</title>
-    <!-- اسکریپت رسمی تلگرام -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
@@ -46,7 +45,17 @@
         .info-title { font-size: 11px; color: #aaa; margin-bottom: 3px; }
         .info-value { font-weight: bold; color: #ffd700; }
 
-        .wheel-container { position: relative; margin: 20px auto; width: 260px; height: 260px; }
+        .timer-box {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #00d2d3;
+            background: rgba(0, 210, 211, 0.1);
+            padding: 6px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .wheel-container { position: relative; margin: 15px auto; width: 260px; height: 260px; }
         .pointer { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 14px solid transparent; border-right: 14px solid transparent; border-top: 25px solid #ff4757; z-index: 10; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.6)); }
         #wheel { width: 260px; height: 260px; border-radius: 50%; border: 6px solid #f1c40f; box-shadow: 0 0 20px rgba(241, 196, 15, 0.4); transition: transform 4s cubic-bezier(0.15, 0.99, 0.18, 0.99); }
         
@@ -58,42 +67,22 @@
         .btn-buy { background: linear-gradient(45deg, #ff9f43, #ee5253); box-shadow: 0 5px 15px rgba(238, 82, 83, 0.4); }
         .btn-invite { background: linear-gradient(45deg, #0abde3, #10ac84); box-shadow: 0 5px 15px rgba(10, 189, 227, 0.4); }
 
-        .result { margin-top: 12px; font-size: 15px; font-weight: bold; min-height: 22px; color: #2ed573; }
+        .result { margin-top: 10px; font-size: 15px; font-weight: bold; min-height: 22px; color: #2ed573; }
         .loading-status { font-size: 12px; color: #1e90ff; margin-bottom: 5px; }
 
-        /* پاپ‌آپ بسته‌های خرید */
         .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(5px);
-            z-index: 100;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(5px); z-index: 100;
+            justify-content: center; align-items: center; padding: 20px;
         }
         .modal-content {
-            background: #1b2735;
-            border: 1px solid #ffd700;
-            border-radius: 20px;
-            padding: 20px;
-            width: 100%;
-            max-width: 320px;
-            text-align: center;
+            background: #1b2735; border: 1px solid #ffd700; border-radius: 20px; padding: 20px; width: 100%; max-width: 320px; text-align: center;
         }
         .modal-title { font-size: 18px; color: #ffd700; margin-bottom: 15px; }
         .package-item {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 215, 0, 0.3);
-            border-radius: 12px;
-            padding: 10px;
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            transition: 0.2s;
+            background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 12px; padding: 10px; margin-bottom: 10px; display: flex;
+            justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s;
         }
         .package-item:hover { background: rgba(255, 215, 0, 0.2); }
         .package-name { font-weight: bold; color: #fff; font-size: 14px; }
@@ -104,7 +93,7 @@
 <body>
     <div class="container">
         <h1>✨ گردونه شانس طلایی ✨</h1>
-        <div id="loadingStatus" class="loading-status">در حال به‌روزرسانی موجودی... 🔄</div>
+        <div id="loadingStatus" class="loading-status">در حال دریافت حساب کاربری... 🔄</div>
         
         <div class="info-panel">
             <div class="info-box">
@@ -113,8 +102,12 @@
             </div>
             <div class="info-box">
                 <span class="info-title">🎰 شانس باقی‌مانده</span>
-                <span class="info-value"><span id="spinsLeft">3</span> بار</span>
+                <span class="info-value"><span id="spinsLeft">0</span> بار</span>
             </div>
+        </div>
+
+        <div id="timerBox" class="timer-box">
+            ⏳ دریافت شانس رایگان بعدی: <span id="countdown">--:--:--</span>
         </div>
 
         <div class="wheel-container">
@@ -125,7 +118,7 @@
         <div class="result" id="resultText"></div>
 
         <div class="btn-group">
-            <button id="spinBtn" onclick="spin()">بچرخون! 🎲</button>
+            <button id="spinBtn" onclick="spin()" disabled>بچرخون! 🎲</button>
             <button class="btn-invite" onclick="shareInviteLink()">👥 دعوت از دوستان (+۲ شانس)</button>
             <button class="btn-buy" onclick="openBuyModal()">🛒 خرید شانس بیشتر</button>
         </div>
@@ -135,7 +128,6 @@
     <div class="modal" id="buyModal">
         <div class="modal-content">
             <div class="modal-title">🛒 انتخاب بسته شانس</div>
-            
             <div class="package-item" onclick="selectPackage('۳ شانس', '۱۵,۰۰۰ تومان')">
                 <span class="package-name">🎯 ۳ شانس</span>
                 <span class="package-price">۱۵,۰۰۰ تومان</span>
@@ -152,7 +144,6 @@
                 <span class="package-name">🔥 ۱۰ شانس</span>
                 <span class="package-price">۴۲,۰۰۰ تومان</span>
             </div>
-
             <button class="close-btn" onclick="closeBuyModal()">انصراف / بستن</button>
         </div>
     </div>
@@ -178,13 +169,64 @@
         let coins = parseInt(localStorage.getItem('user_coins_' + userId)) || 0;
         let spins = parseInt(localStorage.getItem('user_spins_' + userId));
         if (isNaN(spins)) spins = 3;
+        let lastSpinTime = parseInt(localStorage.getItem('user_lastSpin_' + userId)) || 0;
 
         function updateUI() {
             document.getElementById('coinCount').innerText = coins;
             document.getElementById('spinsLeft').innerText = spins;
+            
             localStorage.setItem('user_coins_' + userId, coins.toString());
             localStorage.setItem('user_spins_' + userId, spins.toString());
+            localStorage.setItem('user_lastSpin_' + userId, lastSpinTime.toString());
+
             document.getElementById('spinBtn').disabled = spins <= 0;
+            checkDailyReset();
+        }
+
+        function checkDailyReset() {
+            const now = Date.now();
+            const twentyFourHours = 24 * 60 * 60 * 1000;
+            
+            if (spins <= 0 && lastSpinTime > 0) {
+                const diff = now - lastSpinTime;
+                if (diff >= twentyFourHours) {
+                    spins = 3;
+                    lastSpinTime = 0;
+                    document.getElementById('timerBox').style.display = 'none';
+                    updateUI();
+                    saveDataToGoogleSheet();
+                } else {
+                    document.getElementById('timerBox').style.display = 'block';
+                    startCountdown(twentyFourHours - diff);
+                }
+            } else {
+                document.getElementById('timerBox').style.display = 'none';
+            }
+        }
+
+        let countdownInterval = null;
+        function startCountdown(ms) {
+            if (countdownInterval) clearInterval(countdownInterval);
+            
+            function tick() {
+                if (ms <= 0) {
+                    clearInterval(countdownInterval);
+                    spins = 3;
+                    lastSpinTime = 0;
+                    updateUI();
+                    saveDataToGoogleSheet();
+                    return;
+                }
+                const h = Math.floor(ms / (1000 * 60 * 60));
+                const m = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+                const s = Math.floor((ms % (1000 * 60)) / 1000);
+                
+                document.getElementById('countdown').innerText = 
+                    `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+                ms -= 1000;
+            }
+            tick();
+            countdownInterval = setInterval(tick, 1000);
         }
 
         function saveDataToGoogleSheet() {
@@ -194,7 +236,8 @@
                 name: userName,
                 username: userUsername,
                 coins: coins,
-                spins: spins
+                spins: spins,
+                lastSpinTime: lastSpinTime
             };
             fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
@@ -213,6 +256,7 @@
                     if (data && data.status === 'success') {
                         coins = parseInt(data.coins) || 0;
                         spins = parseInt(data.spins) || 0;
+                        lastSpinTime = parseInt(data.lastSpinTime) || 0;
                     } else {
                         saveDataToGoogleSheet();
                     }
@@ -247,7 +291,6 @@
         function drawWheel() {
             const numSegments = items.length;
             const anglePerSegment = (2 * Math.PI) / numSegments;
-            
             ctx.clearRect(0, 0, 260, 260);
 
             for (let i = 0; i < numSegments; i++) {
@@ -268,17 +311,19 @@
             }
         }
 
-        // ۲. رسم اولیه و آپدیت UI فوری
         drawWheel();
         updateUI();
-
-        // ۳. لود اطلاعات از گوگل شیت در پس‌زمینه
         loadUserData();
 
         function spin() {
             if (isSpinning || spins <= 0) return;
             isSpinning = true;
             spins--;
+            
+            if (spins === 0) {
+                lastSpinTime = Date.now();
+            }
+
             updateUI();
 
             document.getElementById('spinBtn').disabled = true;

@@ -95,9 +95,9 @@
     <script>
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzOTR4Seq4weCerePZ3yBWCC4O0hU-2DVZepEPWWLfJjcjyYVw2-grjS1JvoPmMhfeM/exec';
 
-        // آیدی ربات تلگرام خودتون بدون @ (مثال: my_lucky_bot)
+        // نام کاربری ربات تلگرام شما (بدون @)
         const BOT_USERNAME = 'نام_کاربری_ربات_شما'; 
-        // لینک پرداخت زرین‌پال، آیدی‌پی یا کارت به کارت شما
+        // لینک پرداخت (زرین‌پال، آیدی‌پی یا ...)
         const PAYMENT_URL = 'https://zarinp.al/your_link'; 
 
         let telegramUser = null;
@@ -121,16 +121,19 @@
         // ورود برای بار اول: ۳ شانس اولیه
         if (isNaN(spins)) {
             spins = 3;
+            lastDailyClaim = Date.now();
             localStorage.setItem('user_spins_' + userId, spins);
+            localStorage.setItem('last_daily_claim_' + userId, lastDailyClaim);
         }
 
-        // بررسی شانس ۲۴ ساعته
+        // سیستم مدیریت شانس روزانه و سوختن شانس استفاده‌نشده
         function checkDailyBonus() {
             const now = Date.now();
             const twentyFourHours = 24 * 60 * 60 * 1000;
 
             if (now - lastDailyClaim >= twentyFourHours) {
-                spins += 1;
+                // اگر ۲۴ ساعت بگذرد، شانس‌های مجانی قبلی می‌سوزد و ۱ شانس جدید جایگزین می‌شود
+                spins = 1; 
                 lastDailyClaim = now;
                 localStorage.setItem('user_spins_' + userId, spins);
                 localStorage.setItem('last_daily_claim_' + userId, lastDailyClaim);
@@ -148,9 +151,9 @@
                 const hours = Math.floor(diff / (1000 * 60 * 60));
                 const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
                 const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-                document.getElementById('timerText').innerText = `🎁 شانس رایگان بعدی در: ${hours}:${minutes}:${seconds}`;
+                document.getElementById('timerText').innerText = `⏳ فرصت استفاده از شانس امروز: ${hours}:${minutes}:${seconds}`;
             } else {
-                document.getElementById('timerText').innerText = `🎁 شانس رایگان جدید دریافت شد!`;
+                checkDailyBonus();
             }
         }
 
@@ -262,7 +265,6 @@
             }).catch(err => console.log('Sheet Error:', err));
         }
 
-        // دکمه دعوت از دوست
         function shareInviteLink() {
             const inviteUrl = `https://t.me/share/url?url=https://t.me/${BOT_USERNAME}&text=بیا%20تو%20این%20مینی‌آپ%20گردونه%20شانس%20رو%20بچرخون%20و%20سکه%20برنده%20شو!%20🎁`;
             if (window.Telegram && window.Telegram.WebApp) {
@@ -272,9 +274,8 @@
             }
         }
 
-        // دکمه خرید شانس
         function buySpins() {
-            if (confirm('آیا می‌خواهید با پرداخت، ۵ شانس جدید خریداری کنید؟')) {
+            if (confirm('آیا می‌خواهید برای خرید شانس بیشتر وارد صفحه پرداخت شوید؟')) {
                 if (window.Telegram && window.Telegram.WebApp) {
                     window.Telegram.WebApp.openLink(PAYMENT_URL);
                 } else {

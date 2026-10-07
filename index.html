@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>گردونه شانس طلایی</title>
+    <!-- اسکریپت تلگرام -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
@@ -68,7 +69,7 @@
         .btn-invite { background: linear-gradient(45deg, #0abde3, #10ac84); box-shadow: 0 5px 15px rgba(10, 189, 227, 0.4); }
 
         .result { margin-top: 10px; font-size: 15px; font-weight: bold; min-height: 22px; color: #2ed573; }
-        .loading-status { font-size: 12px; color: #1e90ff; margin-bottom: 5px; }
+        .user-id-badge { font-size: 11px; color: #888; margin-top: 4px; }
 
         .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -93,7 +94,7 @@
 <body>
     <div class="container">
         <h1>✨ گردونه شانس طلایی ✨</h1>
-        <div id="loadingStatus" class="loading-status">در حال دریافت حساب کاربری... 🔄</div>
+        <div id="userIdBadge" class="user-id-badge">شناسه: در حال شناسایی...</div>
         
         <div class="info-panel">
             <div class="info-box">
@@ -102,7 +103,7 @@
             </div>
             <div class="info-box">
                 <span class="info-title">🎰 شانس باقی‌مانده</span>
-                <span class="info-value"><span id="spinsLeft">0</span> بار</span>
+                <span class="info-value"><span id="spinsLeft">3</span> بار</span>
             </div>
         </div>
 
@@ -118,7 +119,7 @@
         <div class="result" id="resultText"></div>
 
         <div class="btn-group">
-            <button id="spinBtn" onclick="spin()" disabled>بچرخون! 🎲</button>
+            <button id="spinBtn" onclick="spin()">بچرخون! 🎲</button>
             <button class="btn-invite" onclick="shareInviteLink()">👥 دعوت از دوستان (+۲ شانس)</button>
             <button class="btn-buy" onclick="openBuyModal()">🛒 خرید شانس بیشتر</button>
         </div>
@@ -153,31 +154,50 @@
         const BOT_USERNAME = 'LuckiyiyBot';
         const SUPPORT_USERNAME = 'luckiy_support';
 
-        let telegramUser = null;
-        if (window.Telegram && window.Telegram.WebApp) {
-            window.Telegram.WebApp.ready();
-            window.Telegram.WebApp.expand();
-            if (window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
-                telegramUser = window.Telegram.WebApp.initDataUnsafe.user;
+        let userId = '';
+        let userName = 'مهمان';
+        let userUsername = 'guest';
+
+        // مقداردهی اولیه و شناسایی کاربر
+        function initUser() {
+            const tg = window.Telegram ? window.Telegram.WebApp : null;
+            if (tg) {
+                tg.ready();
+                tg.expand();
             }
+
+            if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                const user = tg.initDataUnsafe.user;
+                userId = user.id.toString();
+                userName = ((user.first_name || '') + ' ' + (user.last_name || '')).trim();
+                userUsername = user.username ? '@' + user.username : 'ندارد';
+            } else {
+                // اگر در مرورگر تست می‌شود، یک آی‌دی ثابت در localStorage بساز تا با ریلود تغییر نکند
+                let savedGuestId = localStorage.getItem('persistent_guest_id');
+                if (!savedGuestId) {
+                    savedGuestId = 'GUEST_' + Math.floor(100000 + Math.random() * 900000);
+                    localStorage.setItem('persistent_guest_id', savedGuestId);
+                }
+                userId = savedGuestId;
+            }
+
+            document.getElementById('userIdBadge').innerText = `کاربر: ${userName} (${userId})`;
         }
 
-        const userId = telegramUser ? telegramUser.id : ('GUEST_' + Math.floor(Math.random()*1000));
-        const userName = telegramUser ? ((telegramUser.first_name || '') + ' ' + (telegramUser.last_name || '')).trim() : 'مهمان';
-        const userUsername = telegramUser ? (telegramUser.username ? '@' + telegramUser.username : 'ندارد') : 'guest';
+        initUser();
 
-        let coins = parseInt(localStorage.getItem('user_coins_' + userId)) || 0;
-        let spins = parseInt(localStorage.getItem('user_spins_' + userId));
+        let coins = parseInt(localStorage.getItem('coins_' + userId)) || 0;
+        let spins = parseInt(localStorage.getItem('spins_' + userId));
         if (isNaN(spins)) spins = 3;
-        let lastSpinTime = parseInt(localStorage.getItem('user_lastSpin_' + userId)) || 0;
+        let lastSpinTime = parseInt(localStorage.getItem('lastSpin_' + userId)) || 0;
 
         function updateUI() {
             document.getElementById('coinCount').innerText = coins;
             document.getElementById('spinsLeft').innerText = spins;
             
-            localStorage.setItem('user_coins_' + userId, coins.toString());
-            localStorage.setItem('user_spins_' + userId, spins.toString());
-            localStorage.setItem('user_lastSpin_' + userId, lastSpinTime.toString());
+            localStorage.setItem('coins_' + userId, coins.toString());
+            localStorage.setItem('spins_' + userId, spins.toString());
+            localStorage.setItem('lastSpin_' + userId, lastSpinTime.toString());
 
             document.getElementById('spinBtn').disabled = spins <= 0;
             checkDailyReset();
@@ -260,12 +280,9 @@
                     } else {
                         saveDataToGoogleSheet();
                     }
-                    document.getElementById('loadingStatus').style.display = 'none';
                     updateUI();
                 })
                 .catch(err => {
-                    console.log('Error loading data:', err);
-                    document.getElementById('loadingStatus').style.display = 'none';
                     updateUI();
                 });
         }

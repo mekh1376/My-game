@@ -19,6 +19,7 @@
             text-align: center;
             padding: 15px;
             overflow-x: hidden;
+            position: relative;
         }
         .container {
             width: 100%;
@@ -29,8 +30,31 @@
             padding: 20px 15px;
             border-radius: 25px;
             box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+            position: relative;
         }
-        h1 { font-size: 20px; color: #f1c40f; text-shadow: 0 0 10px rgba(241, 196, 15, 0.5); margin-bottom: 5px; }
+        
+        /* دکمه دایره‌ای تاج برای جدول رتبه‌بندی */
+        .btn-crown-leaderboard {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f1c40f, #f39c12);
+            border: 2px solid #fff;
+            box-shadow: 0 0 12px rgba(241, 196, 15, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            z-index: 10;
+        }
+        .btn-crown-leaderboard:active { transform: scale(0.9); }
+
+        h1 { font-size: 20px; color: #f1c40f; text-shadow: 0 0 10px rgba(241, 196, 15, 0.5); margin-bottom: 5px; margin-top: 5px; }
         
         .info-panel {
             display: flex;
@@ -54,8 +78,8 @@
             color: #00d2d3;
             background: rgba(0, 210, 211, 0.15);
             border: 1px solid rgba(0, 210, 211, 0.4);
-            padding: 8px;
-            border-radius: 10px;
+            padding: 10px;
+            border-radius: 12px;
             display: none;
         }
 
@@ -68,7 +92,6 @@
         button:active { transform: scale(0.98); }
         button:disabled { background: #57606f; box-shadow: none; cursor: not-allowed; opacity: 0.6; }
         
-        .btn-leaderboard { background: linear-gradient(45deg, #f1c40f, #f39c12); box-shadow: 0 5px 15px rgba(241, 196, 15, 0.4); color: #000; }
         .btn-buy { background: linear-gradient(45deg, #ff9f43, #ee5253); box-shadow: 0 5px 15px rgba(238, 82, 83, 0.4); }
         .btn-invite { background: linear-gradient(45deg, #0abde3, #10ac84); box-shadow: 0 5px 15px rgba(10, 189, 227, 0.4); }
 
@@ -95,7 +118,7 @@
         .package-price { color: #2ed573; font-weight: bold; font-size: 14px; }
         .close-btn { background: #ff4757; margin-top: 10px; padding: 8px; font-size: 14px; }
 
-        /* استایل جدول رتبه‌بندی */
+        /* استایل جدول رتبه‌بندی ۱۰ نفر برتر */
         .leaderboard-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
         .leaderboard-item {
             display: flex; justify-content: space-between; align-items: center;
@@ -112,6 +135,9 @@
 </head>
 <body>
     <div class="container">
+        <!-- دکمه دایره‌ای تاج -->
+        <div class="btn-crown-leaderboard" onclick="openLeaderboard()" title="جدول رتبه‌بندی">👑</div>
+
         <h1>✨ گردونه شانس طلایی ✨</h1>
         <div id="userIdBadge" class="user-id-badge">شناسه: در حال شناسایی...</div>
         
@@ -126,9 +152,10 @@
             </div>
         </div>
 
-        <!-- باکس تایمر معکوس -->
+        <!-- باکس تایمر معکوس ۲۴ ساعته -->
         <div id="timerBox" class="timer-box">
-            ⏳ دریافت شانس رایگان بعدی: <span id="countdown">--:--:--</span>
+            ⏳ دریافت ۳ شانس رایگان بعدی در:<br>
+            <span id="countdown" style="font-size: 16px; color: #ffd700;">--:--:--</span>
         </div>
 
         <div class="wheel-container">
@@ -140,18 +167,17 @@
 
         <div class="btn-group">
             <button id="spinBtn" onclick="spin()">بچرخون! 🎲</button>
-            <button class="btn-leaderboard" onclick="openLeaderboard()">🏆 جدول رتبه‌بندی</button>
             <button class="btn-invite" onclick="shareInviteLink()">👥 دعوت از دوستان (+۲ شانس)</button>
             <button class="btn-buy" onclick="openBuyModal()">🛒 خرید شانس بیشتر</button>
         </div>
     </div>
 
-    <!-- پاپ‌آپ رتبه‌بندی -->
+    <!-- پاپ‌آپ رتبه‌بندی ۱۰ نفر برتر -->
     <div class="modal" id="leaderboardModal">
         <div class="modal-content">
-            <div class="modal-title">🏆 برترین کاربران (بر اساس سکه)</div>
+            <div class="modal-title">👑 ۱۰ کاربر برتر گردونه</div>
             <div id="leaderboardList" class="leaderboard-list">
-                <div style="color: #aaa; font-size: 13px;">در حال دریافت اطلاعات...</div>
+                <div style="color: #aaa; font-size: 13px;">در حال دریافت جدول برترین‌ها...</div>
             </div>
             <button class="close-btn" onclick="closeLeaderboard()">بستن</button>
         </div>
@@ -185,13 +211,12 @@
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby54tOaKv8Fu1DiyLD66wuCtXRKgBoChREogCCmQEooNxeXNNXroGXa0XeWAqo6jLl_pg/exec';
         const BOT_USERNAME = 'LuckiyiyBot';
         const SUPPORT_USERNAME = 'luckiy_support';
-        const COOLDOWN_TIME = 24 * 60 * 60 * 1000; // ۲۴ ساعت به میلی‌ثانیه
+        const COOLDOWN_TIME = 24 * 60 * 60 * 1000; // ۲۴ ساعت کامل
 
         let userId = '';
         let userName = 'مهمان';
         let userUsername = 'guest';
 
-        // مقداردهی و شناسایی کاربر
         function initUser() {
             const tg = window.Telegram ? window.Telegram.WebApp : null;
             if (tg) {
@@ -218,7 +243,6 @@
 
         initUser();
 
-        // دریافت اطلاعات ذخیره شده کاربر
         let coins = parseInt(localStorage.getItem('coins_' + userId)) || 0;
         let spins = parseInt(localStorage.getItem('spins_' + userId));
         if (isNaN(spins)) spins = 3;
@@ -236,7 +260,6 @@
             saveLocalLeaderboardData();
         }
 
-        // ذخیره اطلاعات کاربر جاری در حافظه رتبه‌بندی محلی
         function saveLocalLeaderboardData() {
             let allUsers = JSON.parse(localStorage.getItem('global_leaderboard') || '[]');
             let existingIdx = allUsers.findIndex(u => u.userId === userId);
@@ -251,32 +274,38 @@
             localStorage.setItem('global_leaderboard', JSON.stringify(allUsers));
         }
 
-        // منطق دائمی تایمر معکوس ۲۴ ساعته
+        // منطق قطعی و همیشگی تایمر معکوس ۲۴ ساعته هنگام صفر شدن شانس‌ها
         function checkAndRunTimer() {
-            const now = Date.now();
-            const timePassed = now - lastSpinTime;
-            const timeLeft = COOLDOWN_TIME - timePassed;
-
             const timerBox = document.getElementById('timerBox');
 
-            if (spins === 0 && lastSpinTime > 0 && timeLeft > 0) {
-                timerBox.style.display = 'block';
+            if (spins === 0) {
+                if (lastSpinTime === 0) {
+                    lastSpinTime = Date.now();
+                    localStorage.setItem('lastSpin_' + userId, lastSpinTime.toString());
+                }
 
-                const h = Math.floor(timeLeft / (1000 * 60 * 60));
-                const m = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-                const s = Math.floor((timeLeft % (1000 * 60)) / 1000);
+                const now = Date.now();
+                const timePassed = now - lastSpinTime;
+                const timeLeft = COOLDOWN_TIME - timePassed;
 
-                document.getElementById('countdown').innerText = 
-                    `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-            } 
-            else if (spins === 0 && lastSpinTime > 0 && timeLeft <= 0) {
-                spins = 3;
-                lastSpinTime = 0;
-                timerBox.style.display = 'none';
-                updateUI();
-                saveDataToGoogleSheet();
-            } 
-            else {
+                if (timeLeft > 0) {
+                    timerBox.style.display = 'block';
+
+                    const h = Math.floor(timeLeft / (1000 * 60 * 60));
+                    const m = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                    const s = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+                    document.getElementById('countdown').innerText = 
+                        `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+                } else {
+                    // پایان ۲۴ ساعت -> اعطای ۳ شانس مجدد
+                    spins = 3;
+                    lastSpinTime = 0;
+                    timerBox.style.display = 'none';
+                    updateUI();
+                    saveDataToGoogleSheet();
+                }
+            } else {
                 timerBox.style.display = 'none';
             }
         }
@@ -411,16 +440,35 @@
             }, 4000);
         }
 
-        // بخش جدید: مدیریت جدول رتبه‌بندی
+        // دریافت ۱۰ نفر برتر از گوگل شیت / حافظه برتر
         function openLeaderboard() {
             document.getElementById('leaderboardModal').style.display = 'flex';
             const listContainer = document.getElementById('leaderboardList');
-            listContainer.innerHTML = '<div style="color: #aaa; font-size: 13px;">در حال بروزرسانی رتبه‌ها...</div>';
+            listContainer.innerHTML = '<div style="color: #aaa; font-size: 13px;">در حال دریافت جدول برترین‌ها...</div>';
 
+            // درخواست اطلاعات از گوگل شیت برای دریافت همه کاربران
+            fetch(`${GOOGLE_SCRIPT_URL}?action=getLeaderboard`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data && Array.isArray(data)) {
+                        renderLeaderboard(data);
+                    } else {
+                        renderLocalLeaderboard();
+                    }
+                })
+                .catch(() => {
+                    renderLocalLeaderboard();
+                });
+        }
+
+        function renderLocalLeaderboard() {
             let users = JSON.parse(localStorage.getItem('global_leaderboard') || '[]');
-            
-            // مرتب‌سازی بر اساس بیشترین سکه
-            users.sort((a, b) => b.coins - a.coins);
+            renderLeaderboard(users);
+        }
+
+        function renderLeaderboard(users) {
+            const listContainer = document.getElementById('leaderboardList');
+            users.sort((a, b) => (parseInt(b.coins) || 0) - (parseInt(a.coins) || 0));
 
             if (users.length === 0) {
                 listContainer.innerHTML = '<div style="color: #aaa;">هیچ رتبه‌ای ثبت نشده است.</div>';
@@ -428,15 +476,18 @@
             }
 
             let html = '';
-            users.slice(0, 10).forEach((u, index) => {
+            const top10 = users.slice(0, 10);
+            
+            top10.forEach((u, index) => {
                 let topClass = index === 0 ? 'top-1' : (index === 1 ? 'top-2' : (index === 2 ? 'top-3' : ''));
                 let medal = index === 0 ? '🥇 ' : (index === 1 ? '🥈 ' : (index === 2 ? '🥉 ' : ''));
-                
+                let isMe = u.userId === userId ? ' (شما)' : '';
+
                 html += `
                     <div class="leaderboard-item ${topClass}">
                         <span class="rank-num">${index + 1}</span>
-                        <span class="player-name">${medal}${u.name}</span>
-                        <span class="player-coins">${u.coins} سکه</span>
+                        <span class="player-name">${medal}${u.name || 'کاربر'}${isMe}</span>
+                        <span class="player-coins">${u.coins || 0} سکه</span>
                     </div>
                 `;
             });

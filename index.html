@@ -60,6 +60,45 @@
 
         .result { margin-top: 12px; font-size: 15px; font-weight: bold; min-height: 22px; color: #2ed573; }
         .timer-text { font-size: 12px; color: #ffa502; margin-top: 5px; }
+
+        /* پاپ‌آپ بسته‌های خرید */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .modal-content {
+            background: #1b2735;
+            border: 1px solid #ffd700;
+            border-radius: 20px;
+            padding: 20px;
+            width: 100%;
+            max-width: 320px;
+            text-align: center;
+        }
+        .modal-title { font-size: 18px; color: #ffd700; margin-bottom: 15px; }
+        .package-item {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 12px;
+            padding: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .package-item:hover { background: rgba(255, 215, 0, 0.2); }
+        .package-name { font-weight: bold; color: #fff; font-size: 14px; }
+        .package-price { color: #2ed573; font-weight: bold; font-size: 14px; }
+        .close-btn { background: #ff4757; margin-top: 10px; padding: 8px; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -88,17 +127,41 @@
         <div class="btn-group">
             <button id="spinBtn" onclick="spin()">بچرخون! 🎲</button>
             <button class="btn-invite" onclick="shareInviteLink()">👥 دعوت از دوستان (+۲ شانس)</button>
-            <button class="btn-buy" onclick="buySpins()">🛒 خرید شانس بیشتر</button>
+            <button class="btn-buy" onclick="openBuyModal()">🛒 خرید شانس بیشتر</button>
+        </div>
+    </div>
+
+    <!-- پاپ‌آپ بسته‌های خرید -->
+    <div class="modal" id="buyModal">
+        <div class="modal-content">
+            <div class="modal-title">🛒 انتخاب بسته شانس</div>
+            
+            <div class="package-item" onclick="selectPackage('۳ شانس', '۱۵,۰۰۰ تومان')">
+                <span class="package-name">🎯 ۳ شانس</span>
+                <span class="package-price">۱۵,۰۰۰ تومان</span>
+            </div>
+            <div class="package-item" onclick="selectPackage('۵ شانس', '۲۳,۰۰۰ تومان')">
+                <span class="package-name">🎯 ۵ شانس</span>
+                <span class="package-price">۲۳,۰۰۰ تومان</span>
+            </div>
+            <div class="package-item" onclick="selectPackage('۷ شانس', '۳۰,۰۰۰ تومان')">
+                <span class="package-name">🎯 ۷ شانس</span>
+                <span class="package-price">۳۰,۰۰۰ تومان</span>
+            </div>
+            <div class="package-item" onclick="selectPackage('۱۰ شانس', '۴۲,۰۰۰ تومان')">
+                <span class="package-name">🔥 ۱۰ شانس</span>
+                <span class="package-price">۴۲,۰۰۰ تومان</span>
+            </div>
+
+            <button class="close-btn" onclick="closeBuyModal()">انصراف / بستن</button>
         </div>
     </div>
 
     <script>
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzOTR4Seq4weCerePZ3yBWCC4O0hU-2DVZepEPWWLfJjcjyYVw2-grjS1JvoPmMhfeM/exec';
 
-        // نام کاربری ربات تلگرام شما (بدون @)
-        const BOT_USERNAME = 'نام_کاربری_ربات_شما'; 
-        // لینک پرداخت (زرین‌پال، آیدی‌پی یا ...)
-        const PAYMENT_URL = 'https://zarinp.al/your_link'; 
+        const BOT_USERNAME = 'LuckiyiyBot';
+        const SUPPORT_USERNAME = 'luckiy_support';
 
         let telegramUser = null;
         if (window.Telegram && window.Telegram.WebApp) {
@@ -118,7 +181,6 @@
         let spins = parseInt(localStorage.getItem('user_spins_' + userId));
         let lastDailyClaim = parseInt(localStorage.getItem('last_daily_claim_' + userId)) || 0;
 
-        // ورود برای بار اول: ۳ شانس اولیه
         if (isNaN(spins)) {
             spins = 3;
             lastDailyClaim = Date.now();
@@ -126,13 +188,11 @@
             localStorage.setItem('last_daily_claim_' + userId, lastDailyClaim);
         }
 
-        // سیستم مدیریت شانس روزانه و سوختن شانس استفاده‌نشده
         function checkDailyBonus() {
             const now = Date.now();
             const twentyFourHours = 24 * 60 * 60 * 1000;
 
             if (now - lastDailyClaim >= twentyFourHours) {
-                // اگر ۲۴ ساعت بگذرد، شانس‌های مجانی قبلی می‌سوزد و ۱ شانس جدید جایگزین می‌شود
                 spins = 1; 
                 lastDailyClaim = now;
                 localStorage.setItem('user_spins_' + userId, spins);
@@ -274,13 +334,23 @@
             }
         }
 
-        function buySpins() {
-            if (confirm('آیا می‌خواهید برای خرید شانس بیشتر وارد صفحه پرداخت شوید؟')) {
-                if (window.Telegram && window.Telegram.WebApp) {
-                    window.Telegram.WebApp.openLink(PAYMENT_URL);
-                } else {
-                    window.open(PAYMENT_URL, '_blank');
-                }
+        function openBuyModal() {
+            document.getElementById('buyModal').style.display = 'flex';
+        }
+
+        function closeBuyModal() {
+            document.getElementById('buyModal').style.display = 'none';
+        }
+
+        function selectPackage(title, price) {
+            closeBuyModal();
+            const message = `سلام، درخواست خرید بسته گردونه شانس دارم:%0A%0A👤 نام: ${userName}%0A🆔 آیدی عددی: ${userId}%0A📦 بسته: ${title}%0A💰 قیمت: ${price}`;
+            const targetLink = `https://t.me/${SUPPORT_USERNAME}?text=${message}`;
+            
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.openTelegramLink(targetLink);
+            } else {
+                window.open(targetLink, '_blank');
             }
         }
     </script>

@@ -6,64 +6,252 @@
     <title>گردونه شانس طلایی</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Tahoma, Arial, sans-serif; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Vazirmatn', Tahoma, Arial, sans-serif; }
+        
         body {
-            background-color: #121824; color: #ffffff; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; min-height: 100vh; text-align: center; padding: 15px;
+            background: radial-gradient(circle at center, #1e1b4b 0%, #0f172a 60%, #020617 100%);
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+            padding: 15px;
+            overflow-x: hidden;
         }
+
         .container {
-            width: 100%; max-width: 380px; background: #1b2735; border: 1px solid #334155;
-            padding: 20px 15px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); position: relative;
+            width: 100%;
+            max-width: 390px;
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 20px 15px;
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            position: relative;
         }
-        .top-btns { position: absolute; top: 15px; left: 15px; display: flex; gap: 8px; }
+
+        /* چیدمان هدر و دکمه‌های دو طرف تیتر */
+        .header-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
         .icon-btn {
-            width: 38px; height: 38px; border-radius: 50%; border: none; font-size: 18px; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
-        .btn-crown { background: #f1c40f; }
-        .btn-winners { background: #a855f7; }
-        
-        h1 { font-size: 18px; color: #f1c40f; margin-bottom: 5px; }
-        .user-badge { font-size: 11px; color: #94a3b8; margin-bottom: 10px; }
+        .icon-btn:active { transform: scale(0.92); }
+
+        .btn-crown {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #fff;
+        }
+        .btn-winners {
+            background: linear-gradient(135deg, #a855f7, #7e22ce);
+            color: #fff;
+        }
+
+        h1 {
+            font-size: 19px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ffe58f, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 2px 10px rgba(245, 158, 11, 0.3);
+        }
+
+        .user-badge {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-bottom: 12px;
+            background: rgba(15, 23, 42, 0.6);
+            padding: 4px 10px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+
         .info-panel {
-            display: flex; justify-content: space-around; background: #0f172a; padding: 10px; border-radius: 12px; margin-bottom: 10px;
+            display: flex;
+            justify-content: space-around;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            border-radius: 16px;
+            margin-bottom: 12px;
         }
-        .info-title { font-size: 11px; color: #94a3b8; }
-        .info-value { font-size: 15px; font-weight: bold; color: #f1c40f; }
+        .info-title { font-size: 11px; color: #94a3b8; margin-bottom: 2px; }
+        .info-value { font-size: 16px; font-weight: bold; color: #fbbf24; }
+
         .timer-box {
-            font-size: 12px; color: #38bdf8; background: rgba(56, 189, 248, 0.1); padding: 8px; border-radius: 8px; margin-bottom: 10px; display: none;
+            font-size: 12px;
+            color: #38bdf8;
+            background: rgba(56, 189, 248, 0.12);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            padding: 8px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            display: none;
         }
-        .wheel-container { position: relative; margin: 15px auto; width: 250px; height: 250px; }
+
+        /* بخش گردونه */
+        .wheel-container {
+            position: relative;
+            margin: 15px auto;
+            width: 260px;
+            height: 260px;
+        }
+
         .pointer {
-            position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 0; height: 0;
-            border-left: 12px solid transparent; border-right: 12px solid transparent; border-top: 22px solid #ef4444; z-index: 10;
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 14px solid transparent;
+            border-right: 14px solid transparent;
+            border-top: 26px solid #ef4444;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
+            z-index: 10;
         }
-        #wheel { width: 250px; height: 250px; border-radius: 50%; border: 4px solid #f1c40f; transition: transform 4s cubic-bezier(0.15, 0.99, 0.18, 0.99); }
-        .btn-group { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
-        button.action-btn { color: #fff; border: none; padding: 12px; font-size: 14px; font-weight: bold; border-radius: 10px; cursor: pointer; width: 100%; }
-        .btn-spin { background: #22c55e; }
-        .btn-invite { background: #0284c7; }
-        .btn-buy { background: #f97316; }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
-        .result { margin-top: 10px; font-size: 14px; font-weight: bold; min-height: 20px; color: #4ade80; }
+
+        #wheel {
+            width: 260px;
+            height: 260px;
+            border-radius: 50%;
+            border: 6px solid #fbbf24;
+            box-shadow: 0 0 25px rgba(251, 191, 36, 0.4), inset 0 0 15px rgba(0,0,0,0.5);
+            transition: transform 4s cubic-bezier(0.15, 0.99, 0.18, 0.99);
+        }
+
+        .btn-group { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
         
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 100; align-items: center; justify-content: center; }
-        .modal-content { background: #1e293b; border-radius: 15px; padding: 20px; width: 90%; max-width: 340px; text-align: center; max-height: 80vh; overflow-y: auto; }
-        .package-item { background: #334155; border-radius: 8px; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; cursor: pointer; }
-        .list-item { display: flex; justify-content: space-between; padding: 8px 12px; background: #334155; border-radius: 6px; margin-bottom: 6px; font-size: 12px; text-align: right; }
-        .rank-num { font-weight: bold; color: #f1c40f; width: 25px; }
-        .winner-card { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 10px; margin-bottom: 10px; text-align: right; font-size: 12px; }
-        .winner-title { color: #f1c40f; font-weight: bold; margin-bottom: 5px; border-bottom: 1px solid #334155; padding-bottom: 3px; }
+        button.action-btn {
+            color: #fff;
+            border: none;
+            padding: 13px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 12px;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+        }
+        button.action-btn:active { transform: scale(0.98); }
+
+        .btn-spin {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
+        }
+        .btn-invite { background: linear-gradient(135deg, #0284c7, #0369a1); }
+        .btn-buy { background: linear-gradient(135deg, #f97316, #c2410c); }
+
+        button:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(0.8); }
+
+        .result {
+            margin-top: 12px;
+            font-size: 15px;
+            font-weight: bold;
+            min-height: 22px;
+            color: #4ade80;
+            text-shadow: 0 2px 8px rgba(74, 222, 128, 0.3);
+        }
+
+        /* پاپ آپ ها (مودال ها) */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(2, 6, 23, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: #1e293b;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 22px;
+            width: 90%;
+            max-width: 340px;
+            text-align: center;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.7);
+        }
+
+        .package-item {
+            background: #334155;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 12px;
+            background: #334155;
+            border-radius: 8px;
+            margin-bottom: 6px;
+            font-size: 13px;
+            text-align: right;
+        }
+
+        .rank-num { font-weight: bold; color: #fbbf24; width: 25px; }
+
+        .winner-card {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 10px;
+            text-align: right;
+            font-size: 12px;
+        }
+
+        .winner-title {
+            color: #fbbf24;
+            font-weight: bold;
+            margin-bottom: 6px;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 4px;
+        }
     </style>
 </head>
 <body>
+
     <div class="container">
-        <div class="top-btns">
+        <!-- هدر: دکمه برترین‌ها سمت راست، تیتر وسط، دکمه برندگان سمت چپ -->
+        <div class="header-bar">
             <button class="icon-btn btn-crown" onclick="openLeaderboard()" title="برترین‌های هفته">👑</button>
+            <h1>گردونه شانس طلایی</h1>
             <button class="icon-btn btn-winners" onclick="openWinnersHistory()" title="تاریخچه برندگان">🎁</button>
         </div>
-        
-        <h1>گردونه شانس طلایی</h1>
+
         <div id="userBadge" class="user-badge">شناسه: ---</div>
 
         <div class="info-panel">
@@ -75,7 +263,7 @@
 
         <div class="wheel-container">
             <div class="pointer"></div>
-            <canvas id="wheel" width="250" height="250"></canvas>
+            <canvas id="wheel" width="260" height="260"></canvas>
         </div>
 
         <div id="resultText" class="result"></div>
@@ -87,10 +275,10 @@
         </div>
     </div>
 
-    <!-- خرید -->
+    <!-- پاپ‌آپ خرید -->
     <div id="buyModal" class="modal">
         <div class="modal-content">
-            <h3 style="margin-bottom:15px;">انتخاب بسته شانس</h3>
+            <h3 style="margin-bottom:15px; color:#fbbf24;">انتخاب بسته شانس</h3>
             <div class="package-item" onclick="buyPackage('۳ شانس', '۱۵,۰۰۰ تومان')"><span>۳ شانس</span><span>۱۵,۰۰۰ تومان</span></div>
             <div class="package-item" onclick="buyPackage('۵ شانس', '۲۳,۰۰۰ تومان')"><span>۵ شانس</span><span>۲۳,۰۰۰ تومان</span></div>
             <div class="package-item" onclick="buyPackage('۱۰ شانس', '۴۲,۰۰۰ تومان')"><span>۱۰ شانس</span><span>۴۲,۰۰۰ تومان</span></div>
@@ -98,19 +286,19 @@
         </div>
     </div>
 
-    <!-- برترین‌های این هفته -->
+    <!-- پاپ‌آپ برترین‌های این هفته -->
     <div id="leaderboardModal" class="modal">
         <div class="modal-content">
-            <h3 style="margin-bottom:15px;">👑 ۱۰ کاربر برتر این هفته</h3>
+            <h3 style="margin-bottom:15px; color:#fbbf24;">👑 ۱۰ کاربر برتر این هفته</h3>
             <div id="leaderList">در حال دریافت...</div>
             <button class="action-btn" style="background:#ef4444; margin-top:10px;" onclick="closeModal('leaderboardModal')">بستن</button>
         </div>
     </div>
 
-    <!-- تاریخچه برندگان هفته‌های قبل -->
+    <!-- پاپ‌آپ تاریخچه برندگان هفته‌های قبل -->
     <div id="winnersModal" class="modal">
         <div class="modal-content">
-            <h3 style="margin-bottom:15px;">🎁 برندگان هفته‌های گذشته</h3>
+            <h3 style="margin-bottom:15px; color:#a855f7;">🎁 برندگان هفته‌های گذشته</h3>
             <div id="winnersList">در حال دریافت...</div>
             <button class="action-btn" style="background:#ef4444; margin-top:10px;" onclick="closeModal('winnersModal')">بستن</button>
         </div>
@@ -121,12 +309,11 @@
         const BOT_USER = 'LuckiyiyBot';
         const SUPPORT_USER = 'luckiy_support';
 
-        // --- مدیریت شناسه یکتا و ثابت کاربر ---
+        // --- شناسه ثابت کاربر ---
         let userId = '';
         let userName = 'کاربر مهمان';
         let userUsername = 'ندارد';
 
-        // ابتدا بررسی شناسه تلگرام
         let tgUser = null;
         try {
             if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
@@ -135,13 +322,12 @@
         } catch(e){}
 
         if (tgUser && tgUser.id) {
-            userId = 'TG_' + tgUser.id; // شناسه کاملاً ثابت عددی تلگرام
+            userId = 'TG_' + tgUser.id;
             const firstName = tgUser.first_name || '';
             const lastName = tgUser.last_name || '';
             userName = (firstName + ' ' + lastName).trim() || 'کاربر تلگرام';
             userUsername = tgUser.username ? '@' + tgUser.username : 'ندارد';
         } else {
-            // اگر در خارج تلگرام باز شد، یک شناسه یکتا می‌سازد و در حافظه ثابت نگه می‌دارد
             let savedGuestId = localStorage.getItem('fixed_guest_id');
             if (!savedGuestId) {
                 savedGuestId = 'GUEST_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
@@ -150,7 +336,7 @@
             userId = savedGuestId;
         }
 
-        document.getElementById('userBadge').innerText = 'کاربر: ' + userName + ' (' + userId + ')';
+        document.getElementById('userBadge').innerText = 'کاربر: ' + userName;
 
         let coins = parseInt(localStorage.getItem('c_' + userId)) || 0;
         let spins = localStorage.getItem('s_' + userId) !== null ? parseInt(localStorage.getItem('s_' + userId)) : 5;
@@ -178,7 +364,6 @@
                         spins = parseInt(data.spins) || 0;
                         saveState();
                     } else if (data && data.status === 'not_found') {
-                        // اگر کاربر از گوگل شیت توسط مدیریت حذف شده باشد، اطلاعات او ریست شده و دوباره ثبت می‌شود
                         coins = 0; spins = 5; targetTime = 0;
                         saveState();
                         syncSheet();
@@ -208,21 +393,60 @@
         }
         setInterval(checkTimer, 1000);
 
+        // رسم گردونه جذاب با متون خوانا و افکت سه‌بعدی
         const canvas = document.getElementById('wheel');
         const ctx = canvas.getContext('2d');
-        const items = ['۲۰ سکه', 'پوچ', '۵۰ سکه', '۱۰ سکه', '۱۰۰ سکه', 'پوچ', '۲ برابر', '۵ سکه'];
+        const items = ['۲۰ سکه', 'پوچ ❌', '۵۰ سکه', '۱۰ سکه', '۱۰۰ سکه', 'پوچ ❌', '۲ برابر ⚡', '۵ سکه'];
         const values = [20, 0, 50, 10, 100, 0, '2x', 5];
-        const colors = ['#ef4444', '#3b82f6', '#a855f7', '#eab308', '#f97316', '#14b8a6', '#6366f1', '#ec4899'];
+        const colors = ['#dc2626', '#1e293b', '#9333ea', '#ca8a04', '#ea580c', '#334155', '#4f46e5', '#db2777'];
 
         function drawWheel() {
-            const arc = (2 * Math.PI) / items.length;
-            for (let i = 0; i < items.length; i++) {
-                ctx.beginPath(); ctx.fillStyle = colors[i]; ctx.moveTo(125, 125);
-                ctx.arc(125, 125, 125, i * arc, (i + 1) * arc); ctx.fill();
-                ctx.save(); ctx.translate(125, 125); ctx.rotate(i * arc + arc / 2);
-                ctx.fillStyle = "#fff"; ctx.font = "bold 12px Tahoma"; ctx.fillText(items[i], 50, 4);
+            const numSegments = items.length;
+            const arc = (2 * Math.PI) / numSegments;
+            const centerX = 130;
+            const centerY = 130;
+            const radius = 130;
+
+            for (let i = 0; i < numSegments; i++) {
+                const angle = i * arc;
+                ctx.beginPath();
+                ctx.fillStyle = colors[i];
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, angle, angle + arc);
+                ctx.fill();
+
+                // خطوط جداکننده طلایی بین قاچ‌ها
+                ctx.beginPath();
+                ctx.strokeStyle = 'rgba(251, 191, 36, 0.4)';
+                ctx.lineWidth = 2;
+                ctx.moveTo(centerX, centerY);
+                ctx.lineTo(centerX + Math.cos(angle) * radius, centerY + Math.sin(angle) * radius);
+                ctx.stroke();
+
+                // رسم متون شفاف و درخشان
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(angle + arc / 2);
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 13px Tahoma, Arial';
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+                ctx.shadowBlur = 6;
+                ctx.shadowOffsetX = 2;
+                ctx.shadowOffsetY = 2;
+                
+                ctx.fillText(items[i], 52, 5);
                 ctx.restore();
             }
+
+            // دایره مرکزی گردونه
+            ctx.beginPath();
+            ctx.fillStyle = '#fbbf24';
+            ctx.arc(centerX, centerY, 18, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#ffffff';
+            ctx.stroke();
         }
         drawWheel();
 
@@ -270,7 +494,7 @@
                         data.sort((a, b) => (parseInt(b.coins) || 0) - (parseInt(a.coins) || 0));
                         let html = '';
                         data.slice(0, 10).forEach((u, i) => {
-                            html += `<div class="list-item"><span class="rank-num">#${i + 1}</span><span>${u.name || 'کاربر'}</span><span style="color:#22c55e;font-weight:bold;">${u.coins || 0} سکه</span></div>`;
+                            html += `<div class="list-item"><span class="rank-num">#${i + 1}</span><span>${u.name || 'کاربر'}</span><span style="color:#4ade80;font-weight:bold;">${u.coins || 0} سکه</span></div>`;
                         });
                         listDiv.innerHTML = html;
                     } else listDiv.innerHTML = 'هنوز کاربری ثبت نشده است.';

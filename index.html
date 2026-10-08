@@ -248,7 +248,7 @@
             <button class="icon-btn btn-winners" onclick="openWinnersHistory()" title="تاریخچه برندگان">🎁</button>
         </div>
 
-        <div id="userBadge" class="user-badge">در حال دریافت مشخصات...</div>
+        <div id="userBadge" class="user-badge">کاربر: در حال دریافت...</div>
 
         <div class="info-panel">
             <div><div class="info-title">موجودی این هفته</div><div class="info-value"><span id="coins">0</span> سکه</div></div>
@@ -282,7 +282,7 @@
         </div>
     </div>
 
-    <!-- پاپ‌آپ برترین‌های این هفته -->
+    <!-- پاپ‌آپ برترین‌ها -->
     <div id="leaderboardModal" class="modal">
         <div class="modal-content">
             <h3 style="margin-bottom:15px; color:#fbbf24;">👑 ۱۰ کاربر برتر این هفته</h3>
@@ -291,8 +291,272 @@
         </div>
     </div>
 
-    <!-- پاپ‌آپ تاریخچه برندگان هفته‌های قبل -->
+    <!-- پاپ‌آپ تاریخچه برندگان -->
     <div id="winnersModal" class="modal">
         <div class="modal-content">
             <h3 style="margin-bottom:15px; color:#a855f7;">🎁 برندگان هفته‌های گذشته</h3>
-            <div id="winnersList">
+            <div id="winnersList">در حال دریافت...</div>
+            <button class="action-btn" style="background:#ef4444; margin-top:10px;" onclick="closeModal('winnersModal')">بستن</button>
+        </div>
+    </div>
+
+    <script>
+        const GOOGLE_URL = 'https://script.google.com/macros/s/AKfycby54tOaKv8Fu1DiyLD66wuCtXRKgBoChREogCCmQEooNxeXNNXroGXa0XeWAqo6jLl_pg/exec';
+        const BOT_USER = 'LuckiyiyBot';
+        const SUPPORT_USER = 'luckiy_support';
+
+        let userId = '';
+        let userName = 'کاربر مهمان';
+        let userUsername = 'Guest';
+        let coins = 0;
+        let spins = 5;
+        let targetTime = 0;
+        let rotation = 0;
+        let spinning = false;
+
+        const items = ['۲۰ سکه', 'پوچ ❌', '۵۰ سکه', '۱۰ سکه', '۱۰۰ سکه', 'پوچ ❌', '۲ برابر ⚡', '۵ سکه'];
+        const values = [20, 0, 50, 10, 100, 0, '2x', 5];
+        const colors = ['#dc2626', '#1e293b', '#9333ea', '#ca8a04', '#ea580c', '#334155', '#4f46e5', '#db2777'];
+
+        window.addEventListener('load', () => {
+            initTelegramUser();
+            loadLocalData();
+            drawWheel();
+            updateUI();
+            checkTimer();
+            setInterval(checkTimer, 1000);
+            fetchUserDataJSONP();
+        });
+
+        function initTelegramUser() {
+            try {
+                if (window.Telegram && window.Telegram.WebApp) {
+                    window.Telegram.WebApp.ready();
+                    window.Telegram.WebApp.expand();
+                    const tgUser = window.Telegram.WebApp.initDataUnsafe?.user;
+                    if (tgUser && tgUser.id) {
+                        userId = 'TG_' + tgUser.id;
+                        userName = (tgUser.first_name || '') + ' ' + (tgUser.last_name || '');
+                        userName = userName.trim() || 'کاربر ' + tgUser.id;
+                        userUsername = tgUser.username ? '@' + tgUser.username : userName;
+                    }
+                }
+            } catch (e) { console.log(e); }
+
+            if (!userId) {
+                let savedId = localStorage.getItem('guest_id');
+                if (!savedId) {
+                    savedId = 'TG_' + Math.floor(100000 + Math.random() * 900000);
+                    localStorage.setItem('guest_id', savedId);
+                }
+                userId = savedId;
+                userName = 'کاربر ' + userId.replace('TG_', '');
+            }
+
+            document.getElementById('userBadge').innerText = 'کاربر: ' + userName;
+        }
+
+        function loadLocalData() {
+            coins = parseInt(localStorage.getItem('c_' + userId)) || 0;
+            spins = localStorage.getItem('s_' + userId) !== null ? parseInt(localStorage.getItem('s_' + userId)) : 5;
+            targetTime = parseInt(localStorage.getItem('t_' + userId)) || 0;
+        }
+
+        function updateUI() {
+            document.getElementById('coins').innerText = coins;
+            document.getElementById('spins').innerText = spins;
+            document.getElementById('spinBtn').disabled = spins <= 0;
+        }
+
+        function saveState() {
+            localStorage.setItem('c_' + userId, coins);
+            localStorage.setItem('s_' + userId, spins);
+            localStorage.setItem('t_' + userId, targetTime);
+            updateUI();
+        }
+
+        function drawWheel() {
+            const canvas = document.getElementById('wheel');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const numSegments = items.length;
+            const arc = (2 * Math.PI) / numSegments;
+            const centerX = 130, centerY = 130, radius = 130;
+
+            ctx.clearRect(0, 0, 260, 260);
+
+            for (let i = 0; i < numSegments; i++) {
+                const angle = i * arc;
+                ctx.beginPath();
+                ctx.fillStyle = colors[i];
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, angle, angle + arc);
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.strokeStyle = 'rgba(251, 191, 36, 0.4)';
+                ctx.lineWidth = 2;
+                ctx.moveTo(centerX, centerY);
+                ctx.lineTo(centerX + Math.cos(angle) * radius, centerY + Math.sin(angle) * radius);
+                ctx.stroke();
+
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(angle + arc / 2);
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 12px Tahoma, Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+                ctx.shadowBlur = 4;
+                ctx.fillText(items[i], 75, 0);
+                ctx.restore();
+            }
+
+            ctx.beginPath();
+            ctx.fillStyle = '#fbbf24';
+            ctx.arc(centerX, centerY, 18, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#ffffff';
+            ctx.stroke();
+        }
+
+        function spin() {
+            if (spinning || spins <= 0) return;
+            spinning = true;
+            spins--;
+            if (spins === 0) targetTime = Date.now() + (24 * 60 * 60 * 1000);
+            saveState();
+
+            const deg = Math.floor(Math.random() * 360) + 1440;
+            rotation += deg;
+            document.getElementById('wheel').style.transform = `rotate(${rotation}deg)`;
+
+            setTimeout(() => {
+                spinning = false;
+                const actualDeg = rotation % 360;
+                const index = Math.floor((360 - (actualDeg % 360) + 270) % 360 / (360 / items.length));
+                const val = values[index];
+
+                if (typeof val === 'number') coins += val;
+                else if (val === '2x') coins *= 2;
+
+                document.getElementById('resultText').innerText = `نتیجه: ${items[index]}`;
+                saveState();
+                syncSheet();
+            }, 4000);
+        }
+
+        // دریافت اطلاعات کاربر بدون مشکل CORS
+        function fetchUserDataJSONP() {
+            window.handleUserData = function(data) {
+                if (data && data.status === 'found') {
+                    coins = parseInt(data.coins) || 0;
+                    spins = parseInt(data.spins) || 0;
+                    saveState();
+                } else {
+                    syncSheet();
+                }
+            };
+
+            const script = document.createElement('script');
+            script.src = `${GOOGLE_URL}?action=getUserData&userId=${encodeURIComponent(userId)}&callback=handleUserData`;
+            document.body.appendChild(script);
+        }
+
+        function syncSheet() {
+            fetch(GOOGLE_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify({ userId, name: userName, username: userUsername, coins, spins })
+            }).catch(e => console.log(e));
+        }
+
+        function checkTimer() {
+            const now = Date.now();
+            const timerBox = document.getElementById('timerBox');
+            if (spins === 0) {
+                if (!targetTime || targetTime <= now) targetTime = now + (24 * 60 * 60 * 1000);
+                const diff = targetTime - now;
+                if (diff > 0) {
+                    timerBox.style.display = 'block';
+                    const h = Math.floor(diff / 3600000);
+                    const m = Math.floor((diff % 3600000) / 60000);
+                    const s = Math.floor((diff % 60000) / 1000);
+                    document.getElementById('countdown').innerText = `${h}:${m}:${s}`;
+                } else {
+                    spins = 2; targetTime = 0;
+                    timerBox.style.display = 'none';
+                    saveState();
+                }
+            } else { 
+                timerBox.style.display = 'none'; 
+            }
+        }
+
+        function openLeaderboard() {
+            openModal('leaderboardModal');
+            document.getElementById('leaderList').innerHTML = 'در حال دریافت...';
+            window.handleLeaderboard = function(data) {
+                if (data && Array.isArray(data) && data.length > 0) {
+                    data.sort((a, b) => (parseInt(b.coins) || 0) - (parseInt(a.coins) || 0));
+                    let html = '';
+                    data.slice(0, 10).forEach((u, i) => {
+                        const name = u.name && u.name !== 'کاربر مهمان' ? u.name : (u.username || 'کاربر');
+                        html += `<div class="list-item"><span class="rank-num">#${i + 1}</span><span>${name}</span><span style="color:#4ade80;font-weight:bold;">${u.coins || 0} سکه</span></div>`;
+                    });
+                    document.getElementById('leaderList').innerHTML = html;
+                } else {
+                    document.getElementById('leaderList').innerHTML = 'هنوز اطلاعاتی ثبت نشده است.';
+                }
+            };
+            const script = document.createElement('script');
+            script.src = `${GOOGLE_URL}?action=getLeaderboard&callback=handleLeaderboard`;
+            document.body.appendChild(script);
+        }
+
+        function openWinnersHistory() {
+            openModal('winnersModal');
+            document.getElementById('winnersList').innerHTML = 'در حال دریافت...';
+            window.handleWinners = function(data) {
+                if (data && Array.isArray(data) && data.length > 0) {
+                    let html = '';
+                    data.forEach(w => {
+                        html += `
+                            <div class="winner-card">
+                                <div class="winner-title">📅 هفته: ${w.date}</div>
+                                <div>🥇 نفر اول: <b>${w.top1}</b></div>
+                                <div>🥈 نفر دوم: <b>${w.top2}</b></div>
+                                <div>🥉 نفر سوم: <b>${w.top3}</b></div>
+                                <div style="margin-top:5px; color:#38bdf8;">🎲 برندگان قرعه‌کشی:</div>
+                                <div style="font-size:11px; padding-right:10px;">• ${w.lottery1}<br>• ${w.lottery2}<br>• ${w.lottery3}</div>
+                            </div>`;
+                    });
+                    document.getElementById('winnersList').innerHTML = html;
+                } else {
+                    document.getElementById('winnersList').innerHTML = 'تاریخچه‌ای یافت نشد.';
+                }
+            };
+            const script = document.createElement('script');
+            script.src = `${GOOGLE_URL}?action=getWinnersHistory&callback=handleWinners`;
+            document.body.appendChild(script);
+        }
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        function shareInvite() {
+            const txt = encodeURIComponent("بیا گردونه شانس رو بچرخون و سکه ببر! 🔥");
+            window.open(`https://t.me/share/url?url=https://t.me/${BOT_USER}&text=${txt}`);
+        }
+
+        function buyPackage(p, pr) {
+            closeModal('buyModal');
+            const txt = encodeURIComponent(`درخواست خرید:\nنام: ${userName}\nشناسه: ${userId}\nبسته: ${p}\nقیمت: ${pr}`);
+            window.open(`https://t.me/${SUPPORT_USER}?text=${txt}`);
+        }
+    </script>
+</body>
+</html>

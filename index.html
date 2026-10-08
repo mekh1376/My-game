@@ -4,13 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>گردونه شانس طلایی</title>
-    <!-- اسکریپت تلگرام -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Tahoma, Arial, sans-serif; }
         body {
-            background: radial-gradient(circle at center, #1b2735 0%, #090a0f 100%);
-            color: #fff;
+            background-color: #121824;
+            color: #ffffff;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -18,103 +17,275 @@
             min-height: 100vh;
             text-align: center;
             padding: 15px;
-            overflow-x: hidden;
-            position: relative;
         }
         .container {
             width: 100%;
             max-width: 380px;
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: #1b2735;
+            border: 1px solid #334155;
             padding: 20px 15px;
-            border-radius: 25px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
             position: relative;
         }
-        
-        .btn-crown-leaderboard {
+        .btn-crown {
             position: absolute;
             top: 15px;
             left: 15px;
-            width: 45px;
-            height: 45px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #f1c40f, #f39c12);
-            border: 2px solid #fff;
-            box-shadow: 0 0 12px rgba(241, 196, 15, 0.6);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 22px;
+            background: #f1c40f;
+            border: none;
+            font-size: 20px;
             cursor: pointer;
-            transition: transform 0.2s;
-            z-index: 10;
         }
-        .btn-crown-leaderboard:active { transform: scale(0.9); }
-
-        h1 { font-size: 20px; color: #f1c40f; text-shadow: 0 0 10px rgba(241, 196, 15, 0.5); margin-bottom: 5px; margin-top: 5px; }
-        
+        h1 { font-size: 18px; color: #f1c40f; margin-bottom: 5px; }
+        .user-badge { font-size: 11px; color: #94a3b8; margin-bottom: 10px; }
         .info-panel {
             display: flex;
             justify-content: space-around;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 10px;
-            border-radius: 15px;
-            margin-top: 10px;
-            border: 1px solid rgba(255, 215, 0, 0.2);
-            font-size: 14px;
-        }
-        .info-box { display: flex; flex-direction: column; align-items: center; }
-        .info-title { font-size: 11px; color: #aaa; margin-bottom: 3px; }
-        .info-value { font-weight: bold; color: #ffd700; }
-
-        .timer-box {
-            margin-top: 12px;
-            font-size: 13px;
-            font-weight: bold;
-            color: #00d2d3;
-            background: rgba(0, 210, 211, 0.15);
-            border: 1px solid rgba(0, 210, 211, 0.4);
+            background: #0f172a;
             padding: 10px;
             border-radius: 12px;
+            margin-bottom: 10px;
+        }
+        .info-title { font-size: 11px; color: #94a3b8; }
+        .info-value { font-size: 15px; font-weight: bold; color: #f1c40f; }
+        .timer-box {
+            font-size: 12px;
+            color: #38bdf8;
+            background: rgba(56, 189, 248, 0.1);
+            padding: 8px;
+            border-radius: 8px;
+            margin-bottom: 10px;
             display: none;
         }
-
-        .wheel-container { position: relative; margin: 15px auto; width: 260px; height: 260px; }
-        .pointer { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 14px solid transparent; border-right: 14px solid transparent; border-top: 25px solid #ff4757; z-index: 10; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.6)); }
-        #wheel { width: 260px; height: 260px; border-radius: 50%; border: 6px solid #f1c40f; box-shadow: 0 0 20px rgba(241, 196, 15, 0.4); transition: transform 4s cubic-bezier(0.15, 0.99, 0.18, 0.99); }
-        
+        .wheel-container { position: relative; margin: 15px auto; width: 250px; height: 250px; }
+        .pointer {
+            position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+            width: 0; height: 0;
+            border-left: 12px solid transparent; border-right: 12px solid transparent;
+            border-top: 22px solid #ef4444; z-index: 10;
+        }
+        #wheel {
+            width: 250px; height: 250px; border-radius: 50%;
+            border: 4px solid #f1c40f;
+            transition: transform 4s cubic-bezier(0.15, 0.99, 0.18, 0.99);
+        }
         .btn-group { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
-        button { background: linear-gradient(45deg, #2ed573, #26af5f); color: #fff; border: none; padding: 12px 20px; font-size: 15px; font-weight: bold; border-radius: 50px; cursor: pointer; box-shadow: 0 5px 15px rgba(46, 213, 115, 0.4); transition: 0.3s; width: 100%; }
-        button:active { transform: scale(0.98); }
-        button:disabled { background: #57606f; box-shadow: none; cursor: not-allowed; opacity: 0.6; }
+        button.action-btn {
+            color: #fff; border: none; padding: 12px; font-size: 14px;
+            font-weight: bold; border-radius: 10px; cursor: pointer; width: 100%;
+        }
+        .btn-spin { background: #22c55e; }
+        .btn-invite { background: #0284c7; }
+        .btn-buy { background: #f97316; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .result { margin-top: 10px; font-size: 14px; font-weight: bold; min-height: 20px; color: #4ade80; }
         
-        .btn-buy { background: linear-gradient(45deg, #ff9f43, #ee5253); box-shadow: 0 5px 15px rgba(238, 82, 83, 0.4); }
-        .btn-invite { background: linear-gradient(45deg, #0abde3, #10ac84); box-shadow: 0 5px 15px rgba(10, 189, 227, 0.4); }
-
-        .result { margin-top: 10px; font-size: 15px; font-weight: bold; min-height: 22px; color: #2ed573; }
-        .user-id-badge { font-size: 11px; color: #888; margin-top: 4px; }
-
         .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(5px); z-index: 100;
-            justify-content: center; align-items: center; padding: 20px;
+            background: rgba(0,0,0,0.8); z-index: 100; align-items: center; justify-content: center;
         }
         .modal-content {
-            background: #1b2735; border: 1px solid #ffd700; border-radius: 20px; padding: 20px; width: 100%; max-width: 340px; text-align: center; max-height: 85vh; overflow-y: auto;
+            background: #1e293b; border-radius: 15px; padding: 20px; width: 90%; max-width: 320px; text-align: center;
         }
-        .modal-title { font-size: 18px; color: #ffd700; margin-bottom: 15px; }
-        
         .package-item {
-            background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 215, 0, 0.3);
-            border-radius: 12px; padding: 10px; margin-bottom: 10px; display: flex;
-            justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s;
+            background: #334155; border-radius: 8px; padding: 10px; margin-bottom: 8px;
+            display: flex; justify-content: space-between; cursor: pointer;
         }
-        .package-item:hover { background: rgba(255, 215, 0, 0.2); }
-        .package-name { font-weight: bold; color: #fff; font-size: 14px; }
-        .package-price { color: #2ed573; font-weight: bold; font-size: 14px; }
-        .close-btn { background: #ff4757; margin-top: 10px; padding: 8px; font-size: 14px; }
+        .leader-item {
+            display: flex; justify-content: space-between; padding: 8px;
+            background: #334155; border-radius: 6px; margin-bottom: 5px; font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="btn-crown" onclick="openModal('leaderboardModal')">👑</button>
+        <h1>گردونه شانس طلایی</h1>
+        <div id="userBadge" class="user-badge">شناسه: ---</div>
 
-        .leaderboard-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
-        .leaderboard-item {
+        <div class="info-panel">
+            <div><div class="info-title">موجودی</div><div class="info-value"><span id="coins">0</span> سکه</div></div>
+            <div><div class="info-title">شانس باقی‌مانده</div><div class="info-value"><span id="spins">0</span> بار</div></div>
+        </div>
+
+        <div id="timerBox" class="timer-box">
+            دریافت ۲ شانس جدید در: <span id="countdown">--:--:--</span>
+        </div>
+
+        <div class="wheel-container">
+            <div class="pointer"></div>
+            <canvas id="wheel" width="250" height="250"></canvas>
+        </div>
+
+        <div id="resultText" class="result"></div>
+
+        <div class="btn-group">
+            <button id="spinBtn" class="action-btn btn-spin" onclick="spin()">بچرخون! 🎲</button>
+            <button class="action-btn btn-invite" onclick="shareInvite()">👥 دعوت از دوستان (+۲ شانس)</button>
+            <button class="action-btn btn-buy" onclick="openModal('buyModal')">🛒 خرید شانس بیشتر</button>
+        </div>
+    </div>
+
+    <!-- پاپ آپ خرید -->
+    <div id="buyModal" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-bottom:15px;">انتخاب بسته شانس</h3>
+            <div class="package-item" onclick="buyPackage('۳ شانس', '۱۵,۰۰ تومان')"><span>۳ شانس</span><span>۱۵,۰۰۰ تومان</span></div>
+            <div class="package-item" onclick="buyPackage('۵ شانس', '۲۳,۰۰ تومان')"><span>۵ شانس</span><span>۲۳,۰۰۰ تومان</span></div>
+            <div class="package-item" onclick="buyPackage('۱۰ شانس', '۴۲,۰۰ تومان')"><span>۱۰ شانس</span><span>۴۲,۰۰۰ تومان</span></div>
+            <button class="action-btn" style="background:#ef4444; margin-top:10px;" onclick="closeModal('buyModal')">بستن</button>
+        </div>
+    </div>
+
+    <!-- پاپ آپ رتبه‌بندی -->
+    <div id="leaderboardModal" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-bottom:15px;">👑 برترین‌ها</h3>
+            <div id="leaderList">در حال دریافت...</div>
+            <button class="action-btn" style="background:#ef4444; margin-top:10px;" onclick="closeModal('leaderboardModal')">بستن</button>
+        </div>
+    </div>
+
+    <script>
+        const GOOGLE_URL = 'https://script.google.com/macros/s/AKfycby54tOaKv8Fu1DiyLD66wuCtXRKgBoChREogCCmQEooNxeXNNXroGXa0XeWAqo6jLl_pg/exec';
+        const BOT_USER = 'LuckiyiyBot';
+        const SUPPORT_USER = 'luckiy_support';
+
+        let userId = 'GUEST_' + Math.floor(1000 + Math.random() * 9000);
+        let userName = 'مهمان';
+        let userUsername = 'guest';
+
+        // مقداردهی کاربر تلگرام
+        try {
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe.user) {
+                const u = window.Telegram.WebApp.initDataUnsafe.user;
+                userId = 'TG_' + u.id;
+                userName = (u.first_name || '') + ' ' + (u.last_name || '');
+                userUsername = u.username ? '@' + u.username : 'ندارد';
+            }
+        } catch(e){}
+
+        document.getElementById('userBadge').innerText = 'کاربر: ' + userName;
+
+        let coins = parseInt(localStorage.getItem('c_' + userId)) || 0;
+        let spins = localStorage.getItem('s_' + userId) !== null ? parseInt(localStorage.getItem('s_' + userId)) : 5; // اولیه ۵
+        let targetTime = parseInt(localStorage.getItem('t_' + userId)) || 0;
+
+        function saveState() {
+            localStorage.setItem('c_' + userId, coins);
+            localStorage.setItem('s_' + userId, spins);
+            localStorage.setItem('t_' + userId, targetTime);
+            document.getElementById('coins').innerText = coins;
+            document.getElementById('spins').innerText = spins;
+            document.getElementById('spinBtn').disabled = spins <= 0;
+        }
+
+        function checkTimer() {
+            const now = Date.now();
+            if (spins === 0) {
+                if (!targetTime || targetTime <= now) {
+                    targetTime = now + (24 * 60 * 60 * 1000);
+                }
+                const diff = targetTime - now;
+                if (diff > 0) {
+                    document.getElementById('timerBox').style.display = 'block';
+                    const h = Math.floor(diff / 3600000);
+                    const m = Math.floor((diff % 3600000) / 60000);
+                    const s = Math.floor((diff % 60000) / 1000);
+                    document.getElementById('countdown').innerText = `${h}:${m}:${s}`;
+                } else {
+                    spins = 2; // هدیه ۲۴ ساعته: ۲ عدد
+                    targetTime = 0;
+                    document.getElementById('timerBox').style.display = 'none';
+                    saveState();
+                }
+            } else {
+                document.getElementById('timerBox').style.display = 'none';
+            }
+            saveState();
+        }
+        setInterval(checkTimer, 1000);
+
+        // رسم گردونه
+        const canvas = document.getElementById('wheel');
+        const ctx = canvas.getContext('2d');
+        const items = ['۲۰ سکه', 'پوچ', '۵۰ سکه', '۱۰ سکه', '۱۰۰ سکه', 'پوچ', '۲ برابر', '۵ سکه'];
+        const values = [20, 0, 50, 10, 100, 0, '2x', 5];
+        const colors = ['#ef4444', '#3b82f6', '#a855f7', '#eab308', '#f97316', '#14b8a6', '#6366f1', '#ec4899'];
+
+        function drawWheel() {
+            const arc = (2 * Math.PI) / items.length;
+            for (let i = 0; i < items.length; i++) {
+                ctx.beginPath();
+                ctx.fillStyle = colors[i];
+                ctx.moveTo(125, 125);
+                ctx.arc(125, 125, 125, i * arc, (i + 1) * arc);
+                ctx.fill();
+                ctx.save();
+                ctx.translate(125, 125);
+                ctx.rotate(i * arc + arc / 2);
+                ctx.fillStyle = "#fff";
+                ctx.font = "bold 12px Tahoma";
+                ctx.fillText(items[i], 50, 4);
+                ctx.restore();
+            }
+        }
+        drawWheel();
+
+        let rotation = 0;
+        let spinning = false;
+
+        function spin() {
+            if (spinning || spins <= 0) return;
+            spinning = true;
+            spins--;
+            if (spins === 0) targetTime = Date.now() + (24 * 60 * 60 * 1000);
+            saveState();
+
+            const deg = Math.floor(Math.random() * 360) + 1440;
+            rotation += deg;
+            canvas.style.transform = `rotate(${rotation}deg)`;
+
+            setTimeout(() => {
+                spinning = false;
+                const actualDeg = rotation % 360;
+                const index = Math.floor((360 - (actualDeg % 360) + 270) % 360 / (360 / items.length));
+                const val = values[index];
+
+                if (typeof val === 'number') coins += val;
+                else if (val === '2x') coins *= 2;
+
+                document.getElementById('resultText').innerText = `نتیجه: ${items[index]}`;
+                saveState();
+                syncSheet();
+            }, 4000);
+        }
+
+        function syncSheet() {
+            fetch(GOOGLE_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify({ userId, name: userName, username: userUsername, coins, spins })
+            }).catch(e => console.log(e));
+        }
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        function shareInvite() {
+            const txt = encodeURIComponent("بیا گردونه شانس رو بچرخون و سکه ببر! 🔥");
+            window.open(`https://t.me/share/url?url=https://t.me/${BOT_USER}&text=${txt}`);
+        }
+
+        function buyPackage(p, pr) {
+            closeModal('buyModal');
+            const txt = encodeURIComponent(`درخواست خرید:\nنام: ${userName}\nآیدی: ${userId}\nبسته: ${p}\nقیمت: ${pr}`);
+            window.open(`https://t.me/${SUPPORT_USER}?text=${txt}`);
+        }
+    </script>
+</body>
+</html>

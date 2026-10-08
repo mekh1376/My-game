@@ -34,7 +34,6 @@
             position: relative;
         }
 
-        /* چیدمان هدر و دکمه‌های دو طرف تیتر */
         .header-bar {
             display: flex;
             align-items: center;
@@ -108,7 +107,6 @@
             display: none;
         }
 
-        /* بخش گردونه */
         .wheel-container {
             position: relative;
             margin: 15px auto;
@@ -173,7 +171,6 @@
             text-shadow: 0 2px 8px rgba(74, 222, 128, 0.3);
         }
 
-        /* پاپ آپ ها (مودال ها) */
         .modal {
             display: none;
             position: fixed;
@@ -245,14 +242,13 @@
 <body>
 
     <div class="container">
-        <!-- هدر: دکمه برترین‌ها سمت راست، تیتر وسط، دکمه برندگان سمت چپ -->
         <div class="header-bar">
             <button class="icon-btn btn-crown" onclick="openLeaderboard()" title="برترین‌های هفته">👑</button>
             <h1>گردونه شانس طلایی</h1>
             <button class="icon-btn btn-winners" onclick="openWinnersHistory()" title="تاریخچه برندگان">🎁</button>
         </div>
 
-        <div id="userBadge" class="user-badge">شناسه: ---</div>
+        <div id="userBadge" class="user-badge">در حال دریافت مشخصات...</div>
 
         <div class="info-panel">
             <div><div class="info-title">موجودی این هفته</div><div class="info-value"><span id="coins">0</span> سکه</div></div>
@@ -309,34 +305,58 @@
         const BOT_USER = 'LuckiyiyBot';
         const SUPPORT_USER = 'luckiy_support';
 
-        // --- شناسه ثابت کاربر ---
         let userId = '';
-        let userName = 'کاربر مهمان';
-        let userUsername = 'ندارد';
+        let userName = '';
+        let userUsername = '';
 
-        let tgUser = null;
-        try {
-            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
-                tgUser = window.Telegram.WebApp.initDataUnsafe.user;
-            }
-        } catch(e){}
-
-        if (tgUser && tgUser.id) {
-            userId = 'TG_' + tgUser.id;
-            const firstName = tgUser.first_name || '';
-            const lastName = tgUser.last_name || '';
-            userName = (firstName + ' ' + lastName).trim() || 'کاربر تلگرام';
-            userUsername = tgUser.username ? '@' + tgUser.username : 'ندارد';
-        } else {
-            let savedGuestId = localStorage.getItem('fixed_guest_id');
-            if (!savedGuestId) {
-                savedGuestId = 'GUEST_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
-                localStorage.setItem('fixed_guest_id', savedGuestId);
-            }
-            userId = savedGuestId;
+        // آماده‌سازی WebApp تلگرام
+        const tg = window.Telegram ? window.Telegram.WebApp : null;
+        if (tg) {
+            tg.ready();
+            tg.expand();
         }
 
-        document.getElementById('userBadge').innerText = 'کاربر: ' + userName;
+        // استخراج مشخصات واقعی کاربر از تلگرام
+        function initUserData() {
+            let tgUser = null;
+            if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                tgUser = tg.initDataUnsafe.user;
+            }
+
+            if (tgUser && tgUser.id) {
+                userId = 'TG_' + tgUser.id;
+                
+                // استخراج اسم و فامیل واقعی
+                const firstName = tgUser.first_name ? tgUser.first_name.trim() : '';
+                const lastName = tgUser.last_name ? tgUser.last_name.trim() : '';
+                userName = (firstName + ' ' + lastName).trim();
+                
+                if (!userName) {
+                    userName = 'کاربر ' + tgUser.id;
+                }
+
+                // استخراج آیدی یا ساخت آیدی نمایش از روی اسم
+                if (tgUser.username) {
+                    userUsername = '@' + tgUser.username;
+                } else {
+                    userUsername = userName.replace(/\s+/g, '_') + '_' + String(tgUser.id).slice(-4);
+                }
+            } else {
+                // جهت تست در مرورگر خارج از تلگرام
+                let savedGuestId = localStorage.getItem('fixed_guest_id');
+                if (!savedGuestId) {
+                    savedGuestId = 'TG_' + Math.floor(100000000 + Math.random() * 900000000);
+                    localStorage.setItem('fixed_guest_id', savedGuestId);
+                }
+                userId = savedGuestId;
+                userName = 'کاربر ' + userId.replace('TG_', '');
+                userUsername = 'User_' + userId.replace('TG_', '');
+            }
+
+            document.getElementById('userBadge').innerText = 'کاربر: ' + userName;
+        }
+
+        initUserData();
 
         let coins = parseInt(localStorage.getItem('c_' + userId)) || 0;
         let spins = localStorage.getItem('s_' + userId) !== null ? parseInt(localStorage.getItem('s_' + userId)) : 5;
@@ -363,6 +383,7 @@
                         coins = parseInt(data.coins) || 0;
                         spins = parseInt(data.spins) || 0;
                         saveState();
+                        syncSheet(); // همگام‌سازی نام جدید در شیت
                     } else if (data && data.status === 'not_found') {
                         coins = 0; spins = 5; targetTime = 0;
                         saveState();
@@ -393,7 +414,6 @@
         }
         setInterval(checkTimer, 1000);
 
-        // رسم گردونه جذاب با متون خوانا و افکت سه‌بعدی
         const canvas = document.getElementById('wheel');
         const ctx = canvas.getContext('2d');
         const items = ['۲۰ سکه', 'پوچ ❌', '۵۰ سکه', '۱۰ سکه', '۱۰۰ سکه', 'پوچ ❌', '۲ برابر ⚡', '۵ سکه'];
@@ -415,7 +435,6 @@
                 ctx.arc(centerX, centerY, radius, angle, angle + arc);
                 ctx.fill();
 
-                // خطوط جداکننده طلایی بین قاچ‌ها
                 ctx.beginPath();
                 ctx.strokeStyle = 'rgba(251, 191, 36, 0.4)';
                 ctx.lineWidth = 2;
@@ -423,7 +442,6 @@
                 ctx.lineTo(centerX + Math.cos(angle) * radius, centerY + Math.sin(angle) * radius);
                 ctx.stroke();
 
-                // رسم متون شفاف و درخشان
                 ctx.save();
                 ctx.translate(centerX, centerY);
                 ctx.rotate(angle + arc / 2);
@@ -439,7 +457,6 @@
                 ctx.restore();
             }
 
-            // دایره مرکزی گردونه
             ctx.beginPath();
             ctx.fillStyle = '#fbbf24';
             ctx.arc(centerX, centerY, 18, 0, 2 * Math.PI);
@@ -494,7 +511,8 @@
                         data.sort((a, b) => (parseInt(b.coins) || 0) - (parseInt(a.coins) || 0));
                         let html = '';
                         data.slice(0, 10).forEach((u, i) => {
-                            html += `<div class="list-item"><span class="rank-num">#${i + 1}</span><span>${u.name || 'کاربر'}</span><span style="color:#4ade80;font-weight:bold;">${u.coins || 0} سکه</span></div>`;
+                            const displayName = u.name && u.name !== 'کاربر مهمان' ? u.name : (u.username || 'کاربر');
+                            html += `<div class="list-item"><span class="rank-num">#${i + 1}</span><span>${displayName}</span><span style="color:#4ade80;font-weight:bold;">${u.coins || 0} سکه</span></div>`;
                         });
                         listDiv.innerHTML = html;
                     } else listDiv.innerHTML = 'هنوز کاربری ثبت نشده است.';

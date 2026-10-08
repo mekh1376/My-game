@@ -89,21 +89,24 @@
             background: rgba(0,0,0,0.8); z-index: 100; align-items: center; justify-content: center;
         }
         .modal-content {
-            background: #1e293b; border-radius: 15px; padding: 20px; width: 90%; max-width: 320px; text-align: center;
+            background: #1e293b; border-radius: 15px; padding: 20px; width: 90%; max-width: 320px; text-align: center; max-height: 80vh; overflow-y: auto;
         }
         .package-item {
             background: #334155; border-radius: 8px; padding: 10px; margin-bottom: 8px;
             display: flex; justify-content: space-between; cursor: pointer;
         }
         .leader-item {
-            display: flex; justify-content: space-between; padding: 8px;
-            background: #334155; border-radius: 6px; margin-bottom: 5px; font-size: 13px;
+            display: flex; justify-content: space-between; padding: 8px 12px;
+            background: #334155; border-radius: 6px; margin-bottom: 6px; font-size: 13px;
         }
+        .rank-num { font-weight: bold; color: #f1c40f; width: 25px; text-align: right; }
+        .player-name { flex-grow: 1; text-align: right; padding: 0 5px; }
+        .player-coins { color: #22c55e; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="container">
-        <button class="btn-crown" onclick="openModal('leaderboardModal')">👑</button>
+        <button class="btn-crown" onclick="openLeaderboard()">👑</button>
         <h1>گردونه شانس طلایی</h1>
         <div id="userBadge" class="user-badge">شناسه: ---</div>
 
@@ -134,9 +137,9 @@
     <div id="buyModal" class="modal">
         <div class="modal-content">
             <h3 style="margin-bottom:15px;">انتخاب بسته شانس</h3>
-            <div class="package-item" onclick="buyPackage('۳ شانس', '۱۵,۰۰ تومان')"><span>۳ شانس</span><span>۱۵,۰۰۰ تومان</span></div>
-            <div class="package-item" onclick="buyPackage('۵ شانس', '۲۳,۰۰ تومان')"><span>۵ شانس</span><span>۲۳,۰۰۰ تومان</span></div>
-            <div class="package-item" onclick="buyPackage('۱۰ شانس', '۴۲,۰۰ تومان')"><span>۱۰ شانس</span><span>۴۲,۰۰۰ تومان</span></div>
+            <div class="package-item" onclick="buyPackage('۳ شانس', '۱۵,۰۰۰ تومان')"><span>۳ شانس</span><span>۱۵,۰۰۰ تومان</span></div>
+            <div class="package-item" onclick="buyPackage('۵ شانس', '۲۳,۰۰۰ تومان')"><span>۵ شانس</span><span>۲۳,۰۰۰ تومان</span></div>
+            <div class="package-item" onclick="buyPackage('۱۰ شانس', '۴۲,۰۰۰ تومان')"><span>۱۰ شانس</span><span>۴۲,۰۰۰ تومان</span></div>
             <button class="action-btn" style="background:#ef4444; margin-top:10px;" onclick="closeModal('buyModal')">بستن</button>
         </div>
     </div>
@@ -144,7 +147,7 @@
     <!-- پاپ آپ رتبه‌بندی -->
     <div id="leaderboardModal" class="modal">
         <div class="modal-content">
-            <h3 style="margin-bottom:15px;">👑 برترین‌ها</h3>
+            <h3 style="margin-bottom:15px;">👑 ۱۰ کاربر برتر</h3>
             <div id="leaderList">در حال دریافت...</div>
             <button class="action-btn" style="background:#ef4444; margin-top:10px;" onclick="closeModal('leaderboardModal')">بستن</button>
         </div>
@@ -159,7 +162,6 @@
         let userName = 'مهمان';
         let userUsername = 'guest';
 
-        // مقداردهی کاربر تلگرام
         try {
             if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe.user) {
                 const u = window.Telegram.WebApp.initDataUnsafe.user;
@@ -172,7 +174,7 @@
         document.getElementById('userBadge').innerText = 'کاربر: ' + userName;
 
         let coins = parseInt(localStorage.getItem('c_' + userId)) || 0;
-        let spins = localStorage.getItem('s_' + userId) !== null ? parseInt(localStorage.getItem('s_' + userId)) : 5; // اولیه ۵
+        let spins = localStorage.getItem('s_' + userId) !== null ? parseInt(localStorage.getItem('s_' + userId)) : 5;
         let targetTime = parseInt(localStorage.getItem('t_' + userId)) || 0;
 
         function saveState() {
@@ -182,6 +184,19 @@
             document.getElementById('coins').innerText = coins;
             document.getElementById('spins').innerText = spins;
             document.getElementById('spinBtn').disabled = spins <= 0;
+            saveLocalLeaderboard();
+        }
+
+        function saveLocalLeaderboard() {
+            let list = JSON.parse(localStorage.getItem('g_lb') || '[]');
+            let idx = list.findIndex(item => item.userId === userId);
+            if (idx > -1) {
+                list[idx].coins = coins;
+                list[idx].name = userName;
+            } else {
+                list.push({ userId, name: userName, coins });
+            }
+            localStorage.setItem('g_lb', JSON.stringify(list));
         }
 
         function checkTimer() {
@@ -198,7 +213,7 @@
                     const s = Math.floor((diff % 60000) / 1000);
                     document.getElementById('countdown').innerText = `${h}:${m}:${s}`;
                 } else {
-                    spins = 2; // هدیه ۲۴ ساعته: ۲ عدد
+                    spins = 2;
                     targetTime = 0;
                     document.getElementById('timerBox').style.display = 'none';
                     saveState();
@@ -210,7 +225,7 @@
         }
         setInterval(checkTimer, 1000);
 
-        // رسم گردونه
+        // گردونه
         const canvas = document.getElementById('wheel');
         const ctx = canvas.getContext('2d');
         const items = ['۲۰ سکه', 'پوچ', '۵۰ سکه', '۱۰ سکه', '۱۰۰ سکه', 'پوچ', '۲ برابر', '۵ سکه'];
@@ -271,6 +286,52 @@
                 mode: 'no-cors',
                 body: JSON.stringify({ userId, name: userName, username: userUsername, coins, spins })
             }).catch(e => console.log(e));
+        }
+
+        function openLeaderboard() {
+            openModal('leaderboardModal');
+            const listDiv = document.getElementById('leaderList');
+            listDiv.innerHTML = 'در حال دریافت...';
+
+            fetch(GOOGLE_URL + '?action=getLeaderboard')
+                .then(r => r.json())
+                .then(data => {
+                    if (data && Array.isArray(data) && data.length > 0) {
+                        renderLeaderboard(data);
+                    } else {
+                        renderLocalLeaderboard();
+                    }
+                })
+                .catch(() => {
+                    renderLocalLeaderboard();
+                });
+        }
+
+        function renderLocalLeaderboard() {
+            let list = JSON.parse(localStorage.getItem('g_lb') || '[]');
+            renderLeaderboard(list);
+        }
+
+        function renderLeaderboard(data) {
+            const listDiv = document.getElementById('leaderList');
+            data.sort((a, b) => (parseInt(b.coins) || 0) - (parseInt(a.coins) || 0));
+            
+            if (data.length === 0) {
+                listDiv.innerHTML = 'هیچ اطلاعاتی یافت نشد.';
+                return;
+            }
+
+            let html = '';
+            data.slice(0, 10).forEach((u, i) => {
+                html += `
+                    <div class="leader-item">
+                        <span class="rank-num">#${i + 1}</span>
+                        <span class="player-name">${u.name || 'کاربر'}</span>
+                        <span class="player-coins">${u.coins || 0} سکه</span>
+                    </div>
+                `;
+            });
+            listDiv.innerHTML = html;
         }
 
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }

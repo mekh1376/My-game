@@ -196,6 +196,23 @@
             box-shadow: 0 25px 50px rgba(0,0,0,0.7);
         }
 
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .refresh-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fbbf24;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
         .package-item {
             background: #334155;
             border-radius: 10px;
@@ -285,7 +302,10 @@
     <!-- پاپ‌آپ برترین‌ها -->
     <div id="leaderboardModal" class="modal">
         <div class="modal-content">
-            <h3 style="margin-bottom:15px; color:#fbbf24;">👑 ۱۰ کاربر برتر این هفته</h3>
+            <div class="modal-header">
+                <h3 style="color:#fbbf24;">👑 ۱۰ کاربر برتر این هفته</h3>
+                <button class="refresh-btn" onclick="clearLeaderboardCache(); openLeaderboard();">🔄 بروزرسانی</button>
+            </div>
             <div id="leaderList">در حال دریافت...</div>
             <button class="action-btn" style="background:#ef4444; margin-top:10px;" onclick="closeModal('leaderboardModal')">بستن</button>
         </div>
@@ -368,6 +388,11 @@
             document.getElementById('spinBtn').disabled = spins <= 0;
         }
 
+        function clearLeaderboardCache() {
+            localStorage.removeItem('cache_leaderboard');
+            localStorage.removeItem('cache_leaderboard_time');
+        }
+
         function saveState() {
             localStorage.setItem('c_' + userId, coins);
             localStorage.setItem('s_' + userId, spins);
@@ -444,6 +469,9 @@
 
                 document.getElementById('resultText').innerText = `نتیجه: ${items[index]}`;
                 saveState();
+                
+                // پاک کردن کش لیدربورد تا با چرخش جدید اطلاعات تازه دریافت شود
+                clearLeaderboardCache();
                 syncSheet();
             }, 4000);
         }
@@ -495,7 +523,7 @@
             }
         }
 
-        // دریافت ۱۰ کاربر برتر با استفاده از کش آنی
+        // دریافت برترین‌ها با پاکسازی اتوماتیک کش پس از تغییر امتیاز
         function openLeaderboard() {
             openModal('leaderboardModal');
             
@@ -503,12 +531,13 @@
             const cacheTime = localStorage.getItem('cache_leaderboard_time');
             const now = Date.now();
 
-            if (cachedData && cacheTime && (now - cacheTime < 5 * 60 * 1000)) {
+            // استفاده از کش فقط در صورتی که کش وجود داشته باشد و کمتر از ۲ دقیقه گذشته باشد
+            if (cachedData && cacheTime && (now - cacheTime < 2 * 60 * 1000)) {
                 renderLeaderboard(JSON.parse(cachedData));
                 return;
             }
 
-            document.getElementById('leaderList').innerHTML = 'در حال دریافت آنلاین...';
+            document.getElementById('leaderList').innerHTML = 'در حال دریافت به‌روزترین رتبه‌بندی...';
             
             window.handleLeaderboard = function(data) {
                 if (data && Array.isArray(data)) {
@@ -530,16 +559,37 @@
                 document.getElementById('leaderList').innerHTML = 'اطلاعاتی یافت نشد.';
                 return;
             }
+
+            // اگر کاربر جاری هنوز در دیتابیس آنلاین ثبت نشده، امتیاز محلی‌اش را موقتاً جایگزین کن
+            let foundUser = false;
+            data.forEach(u => {
+                if (u.name === userName || u.username === userUsername) {
+                    u.coins = Math.max(parseInt(u.coins) || 0, coins);
+                    foundUser = true;
+                }
+            });
+
+            if (!foundUser && coins > 0) {
+                data.push({ name: userName, username: userUsername, coins: coins });
+            }
+
             data.sort((a, b) => (parseInt(b.coins) || 0) - (parseInt(a.coins) || 0));
+            
             let html = '';
             data.slice(0, 10).forEach((u, i) => {
                 const name = u.name && u.name !== 'کاربر مهمان' ? u.name : (u.username || 'کاربر');
-                html += `<div class="list-item"><span class="rank-num">#${i + 1}</span><span>${name}</span><span style="color:#4ade80;font-weight:bold;">${u.coins || 0} سکه</span></div>`;
+                const isMe = (name === userName || u.username === userUsername);
+                const highlightStyle = isMe ? 'style="background:rgba(251, 191, 36, 0.2); border:1px solid #fbbf24;"' : '';
+                
+                html += `<div class="list-item" ${highlightStyle}>
+                            <span class="rank-num">#${i + 1}</span>
+                            <span>${name} ${isMe ? ' (شما)' : ''}</span>
+                            <span style="color:#4ade80;font-weight:bold;">${u.coins || 0} سکه</span>
+                         </div>`;
             });
             document.getElementById('leaderList').innerHTML = html;
         }
 
-        // دریافت تاریخچه برندگان با استفاده از کش آنی
         function openWinnersHistory() {
             openModal('winnersModal');
             

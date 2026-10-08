@@ -121,20 +121,36 @@
         const BOT_USER = 'LuckiyiyBot';
         const SUPPORT_USER = 'luckiy_support';
 
-        let userId = 'GUEST_' + Math.floor(1000 + Math.random() * 9000);
-        let userName = 'مهمان';
-        let userUsername = 'guest';
+        // --- مدیریت شناسه یکتا و ثابت کاربر ---
+        let userId = '';
+        let userName = 'کاربر مهمان';
+        let userUsername = 'ندارد';
 
+        // ابتدا بررسی شناسه تلگرام
+        let tgUser = null;
         try {
-            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe.user) {
-                const u = window.Telegram.WebApp.initDataUnsafe.user;
-                userId = 'TG_' + u.id;
-                userName = (u.first_name || '') + ' ' + (u.last_name || '');
-                userUsername = u.username ? '@' + u.username : 'ندارد';
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+                tgUser = window.Telegram.WebApp.initDataUnsafe.user;
             }
         } catch(e){}
 
-        document.getElementById('userBadge').innerText = 'کاربر: ' + userName;
+        if (tgUser && tgUser.id) {
+            userId = 'TG_' + tgUser.id; // شناسه کاملاً ثابت عددی تلگرام
+            const firstName = tgUser.first_name || '';
+            const lastName = tgUser.last_name || '';
+            userName = (firstName + ' ' + lastName).trim() || 'کاربر تلگرام';
+            userUsername = tgUser.username ? '@' + tgUser.username : 'ندارد';
+        } else {
+            // اگر در خارج تلگرام باز شد، یک شناسه یکتا می‌سازد و در حافظه ثابت نگه می‌دارد
+            let savedGuestId = localStorage.getItem('fixed_guest_id');
+            if (!savedGuestId) {
+                savedGuestId = 'GUEST_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+                localStorage.setItem('fixed_guest_id', savedGuestId);
+            }
+            userId = savedGuestId;
+        }
+
+        document.getElementById('userBadge').innerText = 'کاربر: ' + userName + ' (' + userId + ')';
 
         let coins = parseInt(localStorage.getItem('c_' + userId)) || 0;
         let spins = localStorage.getItem('s_' + userId) !== null ? parseInt(localStorage.getItem('s_' + userId)) : 5;
@@ -162,6 +178,7 @@
                         spins = parseInt(data.spins) || 0;
                         saveState();
                     } else if (data && data.status === 'not_found') {
+                        // اگر کاربر از گوگل شیت توسط مدیریت حذف شده باشد، اطلاعات او ریست شده و دوباره ثبت می‌شود
                         coins = 0; spins = 5; targetTime = 0;
                         saveState();
                         syncSheet();
@@ -296,7 +313,7 @@
 
         function buyPackage(p, pr) {
             closeModal('buyModal');
-            const txt = encodeURIComponent(`درخواست خرید:\nنام: ${userName}\nآیدی: ${userId}\nبسته: ${p}\nقیمت: ${pr}`);
+            const txt = encodeURIComponent(`درخواست خرید:\nنام: ${userName}\nشناسه: ${userId}\nبسته: ${p}\nقیمت: ${pr}`);
             window.open(`https://t.me/${SUPPORT_USER}?text=${txt}`);
         }
     </script>

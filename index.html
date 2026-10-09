@@ -338,7 +338,7 @@
         const values = [20, 0, 50, 10, 100, 0, '2x', 5];
         const colors = ['#dc2626', '#1e293b', '#9333ea', '#ca8a04', '#ea580c', '#334155', '#4f46e5', '#db2777'];
 
-        window.addEventListener('load', () => {
+        window.addEventListener('DOMContentLoaded', () => {
             initTelegramUser();
             loadLocalData();
             drawWheel();
@@ -353,15 +353,18 @@
                 if (window.Telegram && window.Telegram.WebApp) {
                     window.Telegram.WebApp.ready();
                     window.Telegram.WebApp.expand();
-                    const tgUser = window.Telegram.WebApp.initDataUnsafe?.user;
+                    const tgUser = window.Telegram.WebApp.initDataUnsafe ? window.Telegram.WebApp.initDataUnsafe.user : null;
                     if (tgUser && tgUser.id) {
                         userId = 'TG_' + tgUser.id;
-                        userName = (tgUser.first_name || '') + ' ' + (tgUser.last_name || '');
-                        userName = userName.trim() || 'کاربر ' + tgUser.id;
-                        userUsername = tgUser.username ? '@' + tgUser.username : userName;
+                        const fName = tgUser.first_name ? tgUser.first_name.trim() : '';
+                        const lName = tgUser.last_name ? tgUser.last_name.trim() : '';
+                        userName = (fName + ' ' + lName).trim() || ('کاربر ' + tgUser.id);
+                        userUsername = tgUser.username ? ('@' + tgUser.username) : userName;
                     }
                 }
-            } catch (e) { console.log(e); }
+            } catch (e) {
+                console.log('TG Init error:', e);
+            }
 
             if (!userId) {
                 let savedId = localStorage.getItem('guest_id');
@@ -373,7 +376,8 @@
                 userName = 'کاربر ' + userId.replace('TG_', '');
             }
 
-            document.getElementById('userBadge').innerText = 'کاربر: ' + userName;
+            const badge = document.getElementById('userBadge');
+            if (badge) badge.innerText = 'کاربر: ' + userName;
         }
 
         function loadLocalData() {
@@ -383,9 +387,12 @@
         }
 
         function updateUI() {
-            document.getElementById('coins').innerText = coins;
-            document.getElementById('spins').innerText = spins;
-            document.getElementById('spinBtn').disabled = spins <= 0;
+            const cEl = document.getElementById('coins');
+            const sEl = document.getElementById('spins');
+            const btn = document.getElementById('spinBtn');
+            if (cEl) cEl.innerText = coins;
+            if (sEl) sEl.innerText = spins;
+            if (btn) btn.disabled = spins <= 0;
         }
 
         function clearLeaderboardCache() {
@@ -404,6 +411,8 @@
             const canvas = document.getElementById('wheel');
             if (!canvas) return;
             const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+
             const numSegments = items.length;
             const arc = (2 * Math.PI) / numSegments;
             const centerX = 130, centerY = 130, radius = 130;
@@ -456,7 +465,8 @@
 
             const deg = Math.floor(Math.random() * 360) + 1440;
             rotation += deg;
-            document.getElementById('wheel').style.transform = `rotate(${rotation}deg)`;
+            const wheelEl = document.getElementById('wheel');
+            if (wheelEl) wheelEl.style.transform = `rotate(${rotation}deg)`;
 
             setTimeout(() => {
                 spinning = false;
@@ -467,10 +477,10 @@
                 if (typeof val === 'number') coins += val;
                 else if (val === '2x') coins *= 2;
 
-                document.getElementById('resultText').innerText = `نتیجه: ${items[index]}`;
+                const resText = document.getElementById('resultText');
+                if (resText) resText.innerText = `نتیجه: ${items[index]}`;
                 saveState();
                 
-                // پاک‌سازی کش جهت آپدیت بلافاصله رتبه‌بندی جدید
                 clearLeaderboardCache();
                 syncSheet();
             }, 4000);
@@ -497,7 +507,7 @@
                 method: 'POST',
                 mode: 'no-cors',
                 headers: { 'Content-Type': 'text/plain' },
-                body: JSON.stringify({ userId, name: userName, username: userUsername, coins, spins })
+                body: JSON.stringify({ userId: userId, name: userName, username: userUsername, coins: coins, spins: spins })
             }).catch(e => console.log(e));
         }
 
@@ -508,18 +518,19 @@
                 if (!targetTime || targetTime <= now) targetTime = now + (24 * 60 * 60 * 1000);
                 const diff = targetTime - now;
                 if (diff > 0) {
-                    timerBox.style.display = 'block';
+                    if (timerBox) timerBox.style.display = 'block';
                     const h = Math.floor(diff / 3600000);
                     const m = Math.floor((diff % 3600000) / 60000);
                     const s = Math.floor((diff % 60000) / 1000);
-                    document.getElementById('countdown').innerText = `${h}:${m}:${s}`;
+                    const countdown = document.getElementById('countdown');
+                    if (countdown) countdown.innerText = `${h}:${m}:${s}`;
                 } else {
                     spins = 2; targetTime = 0;
-                    timerBox.style.display = 'none';
+                    if (timerBox) timerBox.style.display = 'none';
                     saveState();
                 }
             } else { 
-                timerBox.style.display = 'none'; 
+                if (timerBox) timerBox.style.display = 'none'; 
             }
         }
 
@@ -535,7 +546,8 @@
                 return;
             }
 
-            document.getElementById('leaderList').innerHTML = 'در حال دریافت به‌روزترین رتبه‌بندی...';
+            const lList = document.getElementById('leaderList');
+            if (lList) lList.innerHTML = 'در حال دریافت به‌روزترین رتبه‌بندی...';
             
             window.handleLeaderboard = function(data) {
                 if (data && Array.isArray(data)) {
@@ -543,7 +555,7 @@
                     localStorage.setItem('cache_leaderboard_time', Date.now());
                     renderLeaderboard(data);
                 } else {
-                    document.getElementById('leaderList').innerHTML = 'هنوز اطلاعاتی ثبت نشده است.';
+                    if (lList) lList.innerHTML = 'هنوز اطلاعاتی ثبت نشده است.';
                 }
             };
 
@@ -553,8 +565,11 @@
         }
 
         function renderLeaderboard(data) {
+            const lList = document.getElementById('leaderList');
+            if (!lList) return;
+
             if (!data || data.length === 0) {
-                document.getElementById('leaderList').innerHTML = 'اطلاعاتی یافت نشد.';
+                lList.innerHTML = 'اطلاعاتی یافت نشد.';
                 return;
             }
 
@@ -584,7 +599,7 @@
                             <span style="color:#4ade80;font-weight:bold;">${u.coins || 0} سکه</span>
                          </div>`;
             });
-            document.getElementById('leaderList').innerHTML = html;
+            lList.innerHTML = html;
         }
 
         function openWinnersHistory() {
@@ -599,7 +614,8 @@
                 return;
             }
 
-            document.getElementById('winnersList').innerHTML = 'در حال دریافت آنلاین...';
+            const wList = document.getElementById('winnersList');
+            if (wList) wList.innerHTML = 'در حال دریافت آنلاین...';
 
             window.handleWinners = function(data) {
                 if (data && Array.isArray(data)) {
@@ -607,7 +623,7 @@
                     localStorage.setItem('cache_winners_time', Date.now());
                     renderWinners(data);
                 } else {
-                    document.getElementById('winnersList').innerHTML = 'تاریخچه‌ای یافت نشد.';
+                    if (wList) wList.innerHTML = 'تاریخچه‌ای یافت نشد.';
                 }
             };
 
@@ -617,8 +633,11 @@
         }
 
         function renderWinners(data) {
+            const wList = document.getElementById('winnersList');
+            if (!wList) return;
+
             if (!data || data.length === 0) {
-                document.getElementById('winnersList').innerHTML = 'تاریخچه‌ای یافت نشد.';
+                wList.innerHTML = 'تاریخچه‌ای یافت نشد.';
                 return;
             }
             let html = '';
@@ -633,11 +652,17 @@
                         <div style="font-size:11px; padding-right:10px;">• ${w.lottery1}<br>• ${w.lottery2}<br>• ${w.lottery3}</div>
                     </div>`;
             });
-            document.getElementById('winnersList').innerHTML = html;
+            wList.innerHTML = html;
         }
 
-        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function openModal(id) { 
+            const m = document.getElementById(id);
+            if (m) m.style.display = 'flex'; 
+        }
+        function closeModal(id) { 
+            const m = document.getElementById(id);
+            if (m) m.style.display = 'none'; 
+        }
 
         function shareInvite() {
             const txt = encodeURIComponent("همین الان گردونه رو بچرخون و سکه‌هاتو نقد کن! 🎯✨ چند تا شانس رایگان داری، از دستش نده ⚡️👇");

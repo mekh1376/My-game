@@ -321,7 +321,7 @@
     </div>
 
     <script>
-        const GOOGLE_URL = 'https://script.google.com/macros/s/AKfycbxxTcisLP1BT1vzg6HdwJs6MyIxsDceFEcibKjqBxwnLd5Wh9Bfr34duxUBVNC7cltgDA/exec';
+        const GOOGLE_URL = 'https://script.google.com/macros/s/AKfycbwv6qV_Zm1TuieuRO1jmN_ygx_fpRYKijrnzGLuWMZrScs4qi313dsCJ0NRvtf7yOdE6Q/exec';
         const BOT_USER = 'LuckiyiyBot';
         const SUPPORT_USER = 'luckiy_support';
 
@@ -362,9 +362,7 @@
                         userUsername = tgUser.username ? ('@' + tgUser.username) : userName;
                     }
                 }
-            } catch (e) {
-                console.log('TG Init error:', e);
-            }
+            } catch (e) { console.log(e); }
 
             if (!userId) {
                 let savedId = localStorage.getItem('guest_id');
@@ -479,8 +477,8 @@
 
                 const resText = document.getElementById('resultText');
                 if (resText) resText.innerText = `نتیجه: ${items[index]}`;
-                saveState();
                 
+                saveState();
                 clearLeaderboardCache();
                 syncSheet();
             }, 4000);
@@ -498,17 +496,17 @@
             };
 
             const script = document.createElement('script');
-            script.src = `${GOOGLE_URL}?action=getUserData&userId=${encodeURIComponent(userId)}&callback=handleUserData`;
+            script.src = `${GOOGLE_URL}?action=getUserData&userId=${encodeURIComponent(userId)}&callback=handleUserData&_=` + Date.now();
             document.body.appendChild(script);
         }
 
         function syncSheet() {
-            fetch(GOOGLE_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'text/plain' },
-                body: JSON.stringify({ userId: userId, name: userName, username: userUsername, coins: coins, spins: spins })
-            }).catch(e => console.log(e));
+            const url = `${GOOGLE_URL}?action=saveData&userId=${encodeURIComponent(userId)}&name=${encodeURIComponent(userName)}&username=${encodeURIComponent(userUsername)}&coins=${coins}&spins=${spins}&_=${Date.now()}`;
+            
+            const script = document.createElement('script');
+            script.src = url;
+            document.body.appendChild(script);
+            script.onload = () => script.remove();
         }
 
         function checkTimer() {

@@ -326,17 +326,18 @@
         const SUPPORT_USER = 'luckiy_support';
 
         let userId = '';
-        let userName = 'کاربر مهمان';
-        let userUsername = 'Guest';
+        let userName = '';
+        let userUsername = '';
         let coins = 0;
         let spins = 5;
         let targetTime = 0;
         let rotation = 0;
         let spinning = false;
 
-        const items = ['۲۰ سکه', 'پوچ ❌', '۵۰ سکه', '۱۰ سکه', '۱۰۰ سکه', 'پوچ ❌', '۲ برابر ⚡', '۵ سکه'];
-        const values = [20, 0, 50, 10, 100, 0, '2x', 5];
-        const colors = ['#dc2626', '#1e293b', '#9333ea', '#ca8a04', '#ea580c', '#334155', '#4f46e5', '#db2777'];
+        // گردونه جدید: جایگزینی یکی از پوچ‌ها با ۲۰۰ سکه جذاب
+        const items = ['۲۰ سکه', '۲۰۰ سکه 🌟', '۵۰ سکه', '۱۰ سکه', '۱۰۰ سکه', 'پوچ ❌', '۲ برابر ⚡', '۵ سکه'];
+        const values = [20, 200, 50, 10, 100, 0, '2x', 5];
+        const colors = ['#dc2626', '#eab308', '#9333ea', '#ca8a04', '#ea580c', '#334155', '#4f46e5', '#db2777'];
 
         window.addEventListener('DOMContentLoaded', () => {
             initTelegramUser();
@@ -358,12 +359,13 @@
                         userId = 'TG_' + tgUser.id;
                         const fName = tgUser.first_name ? tgUser.first_name.trim() : '';
                         const lName = tgUser.last_name ? tgUser.last_name.trim() : '';
-                        userName = (fName + ' ' + lName).trim() || ('کاربر ' + tgUser.id);
-                        userUsername = tgUser.username ? ('@' + tgUser.username) : userName;
+                        userName = (fName + ' ' + lName).trim();
+                        userUsername = tgUser.username ? ('@' + tgUser.username) : '';
                     }
                 }
             } catch (e) { console.log(e); }
 
+            // اگر کاربر تلگرام لود نشد یا تست خارج از تلگرام بود
             if (!userId) {
                 let savedId = localStorage.getItem('guest_id');
                 if (!savedId) {
@@ -371,7 +373,15 @@
                     localStorage.setItem('guest_id', savedId);
                 }
                 userId = savedId;
+                userName = 'کاربر مهمان ' + userId.replace('TG_', '');
+                userUsername = 'Guest';
+            }
+
+            if (!userName) {
                 userName = 'کاربر ' + userId.replace('TG_', '');
+            }
+            if (!userUsername) {
+                userUsername = 'Guest';
             }
 
             const badge = document.getElementById('userBadge');
@@ -492,6 +502,11 @@
                 if (data && data.status === 'found') {
                     coins = parseInt(data.coins) || 0;
                     spins = parseInt(data.spins) || 0;
+                    if (data.name && data.name.trim() !== '') {
+                        userName = data.name;
+                        const badge = document.getElementById('userBadge');
+                        if (badge) badge.innerText = 'کاربر: ' + userName;
+                    }
                     saveState();
                 } else {
                     syncSheet();
@@ -572,6 +587,7 @@
             document.body.appendChild(script);
         }
 
+        // اصلاح دقیق تشخیص کاربر بر اساس شناسه (userId) برای جلوگیری از تکرار یا برچسب اشتباه «شما»
         function renderLeaderboard(data) {
             const lList = document.getElementById('leaderList');
             if (!lList) return;
@@ -583,22 +599,26 @@
 
             let userFoundInList = false;
             data.forEach(u => {
-                if (u.name === userName || u.username === userUsername) {
+                if (u.userId === userId) {
                     u.coins = Math.max(parseInt(u.coins) || 0, coins);
+                    if (userName && !userName.includes('کاربر مهمان')) {
+                        u.name = userName;
+                    }
                     userFoundInList = true;
                 }
             });
 
-            if (!userFoundInList && coins > 0) {
-                data.push({ name: userName, username: userUsername, coins: coins });
+            if (!userFoundInList) {
+                data.push({ userId: userId, name: userName, username: userUsername, coins: coins });
             }
 
+            // فیلتر کردن سطرهای تکراری بر اساس شناسه کاربر
             const uniqueData = [];
-            const seenNames = new Set();
+            const seenIds = new Set();
             data.forEach(u => {
-                const key = u.name || u.username;
-                if (!seenNames.has(key)) {
-                    seenNames.add(key);
+                const id = u.userId || u.name;
+                if (!seenIds.has(id)) {
+                    seenIds.add(id);
                     uniqueData.push(u);
                 }
             });
@@ -607,8 +627,8 @@
             
             let html = '';
             uniqueData.slice(0, 10).forEach((u, i) => {
-                const name = u.name && u.name !== 'کاربر مهمان' ? u.name : (u.username || 'کاربر');
-                const isMe = (name === userName || u.username === userUsername);
+                const name = u.name && u.name.trim() !== '' ? u.name : (u.username || 'کاربر');
+                const isMe = (u.userId === userId);
                 const highlightStyle = isMe ? 'style="background:rgba(251, 191, 36, 0.2); border:1px solid #fbbf24;"' : '';
                 
                 html += `<div class="list-item" ${highlightStyle}>

@@ -19,7 +19,7 @@ logging.basicConfig(
 
 # آدرس مینی‌اپ روی رندر و گوگل اسکریپت جدید
 WEB_APP_URL = "https://my-telegrambot-8vwc.onrender.com"
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwY9iiHV_ohus1l229UnCWHzvjHGQLGZsRESlOGGpejORDD9rBJ5P2hOb9Cew0Kk6vzSg/exec"
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwkgKpi40lISqhTlYUyy61QImGxhBL722wKLQTl0z7vtFaXOMC-2KfrwsAgGJFH2dqV4A/exec"
 CHANNEL_URL = "https://t.me/LuckiyiybotChannel"
 SUPPORT_URL = "https://t.me/luckiy_support"
 BOT_USERNAME = "LuckiyiyBot"
@@ -154,12 +154,16 @@ async def handle_callback(
 
     elif query.data == "invite_friends":
         referral_link = f"https://t.me/{BOT_USERNAME}?start=ref_TG_{user_id}"
+        share_text = (
+            f"همین الان با این لینک وارد شو، گردونه رو بچرخون و سکه‌هاتو نقد کن! 🎯✨\n"
+            f"چند تا شانس رایگان داری، از دستش نده ⚡️\n\n{referral_link}"
+        )
         share_keyboard = InlineKeyboardMarkup(
             [
                 [
                     InlineKeyboardButton(
                         "📲 اشتراک‌گذاری با دوستان",
-                        url=f"https://t.me/share/url?url={referral_link}&text=همین%20الان%20گردونه%20رو%20بچرخون%20و%20سکه‌هاتو%20نقد%20کن!%20🎯✨%20چند%20تا%20شانس%20رایگان%20داری،%20از%20دستش%20نده%20⚡️",
+                        url=f"https://t.me/share/url?url={referral_link}&text={requests.utils.quote(share_text)}",
                     )
                 ]
             ]

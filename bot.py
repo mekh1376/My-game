@@ -1,7 +1,8 @@
 import logging
 import os
+import requests
 from threading import Thread
-from flask import Flask, render_template
+from flask import Flask, jsonify, render_template
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, WebAppInfo
 from telegram.ext import (
     Application,
@@ -16,8 +17,9 @@ logging.basicConfig(
     level=logging.INFO,
 )
 
-# آدرس مینی‌اپ روی رندر
+# آدرس مینی‌اپ روی رندر و گوگل اسکریپت جدید شما
 WEB_APP_URL = "https://my-telegrambot-8vwc.onrender.com"
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxJYQAelHDP-SpLtDwIg1-Rmspr3-4Bn_aw0LhKYWrOVeauN9Z6j1mZ6xIihb__wtJsPw/exec"
 CHANNEL_URL = "https://t.me/LuckiyiybotChannel"
 SUPPORT_URL = "https://t.me/luckiy_support"
 BOT_USERNAME = "LuckiyiyBot"
@@ -41,13 +43,35 @@ RULES_TEXT = """📜 **راهنما و قوانین بازی گردونه**
 5️⃣ **سلامت رقابت و قوانین:**
 برای حفظ عدالت، استفاده از چند اکانت (مولتی‌اکانت)، اکانت‌های فیک یا ربات‌های تقلب اکیداً ممنوع است. در صورت مشاهده، تمامی سکه‌ها و حساب کاربر متخلف مسدود خواهد شد."""
 
-# --- بخش وب‌سرور Flask برای لود کردن index.html ---
+# --- بخش وب‌سرور Flask ---
 app = Flask(__name__, template_folder=".")
 
 
 @app.route("/")
 def home():
     return render_template("index.html")
+
+
+# دریافت لیست ۱۰ نفر برتر از گوگل شیت
+@app.route("/api/top-users", methods=["GET"])
+def get_top_users():
+    try:
+        response = requests.get(f"{GOOGLE_SCRIPT_URL}?action=getLeaderboard", timeout=10)
+        data = response.json()
+        return jsonify({"status": "success", "top_users": data})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+
+# دریافت برندگان هفته‌های گذشته از گوگل شیت
+@app.route("/api/winners", methods=["GET"])
+def get_winners():
+    try:
+        response = requests.get(f"{GOOGLE_SCRIPT_URL}?action=getWinnersHistory", timeout=10)
+        data = response.json()
+        return jsonify({"status": "success", "winners": data})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
 
 
 def run_web():

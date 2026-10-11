@@ -17,9 +17,9 @@ logging.basicConfig(
     level=logging.INFO,
 )
 
-# آدرس مینی‌اپ روی رندر و گوگل اسکریپت جدید شما
+# آدرس مینی‌اپ روی رندر و گوگل اسکریپت جدید
 WEB_APP_URL = "https://my-telegrambot-8vwc.onrender.com"
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxJYQAelHDP-SpLtDwIg1-Rmspr3-4Bn_aw0LhKYWrOVeauN9Z6j1mZ6xIihb__wtJsPw/exec"
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwY9iiHV_ohus1l229UnCWHzvjHGQLGZsRESlOGGpejORDD9rBJ5P2hOb9Cew0Kk6vzSg/exec"
 CHANNEL_URL = "https://t.me/LuckiyiybotChannel"
 SUPPORT_URL = "https://t.me/luckiy_support"
 BOT_USERNAME = "LuckiyiyBot"
@@ -52,7 +52,6 @@ def home():
     return render_template("index.html")
 
 
-# دریافت لیست ۱۰ نفر برتر از گوگل شیت
 @app.route("/api/top-users", methods=["GET"])
 def get_top_users():
     try:
@@ -63,7 +62,6 @@ def get_top_users():
         return jsonify({"status": "error", "message": str(e)})
 
 
-# دریافت برندگان هفته‌های گذشته از گوگل شیت
 @app.route("/api/winners", methods=["GET"])
 def get_winners():
     try:
@@ -81,7 +79,38 @@ def run_web():
 
 # --- بخش ربات تلگرام ---
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    first_name = update.effective_user.first_name or "دوست"
+    user = update.effective_user
+    user_id = f"TG_{user.id}"
+    first_name = user.first_name or "دوست"
+    last_name = user.last_name or ""
+    full_name = f"{first_name} {last_name}".strip()
+    username = f"@{user.username}" if user.username else "Guest"
+
+    # بررسی لینک دعوت
+    if context.args:
+        arg = context.args[0]
+        inviter_id = None
+        if arg.startswith("ref_"):
+            inviter_id = arg.replace("ref_", "")
+        elif arg.startswith("TG_"):
+            inviter_id = arg
+
+        if inviter_id and inviter_id != user_id:
+            try:
+                requests.get(
+                    f"{GOOGLE_SCRIPT_URL}?action=addSpins&userId={inviter_id}&count=2",
+                    timeout=5,
+                )
+            except Exception as e:
+                logging.error(f"Error adding referral spins: {e}")
+
+    try:
+        requests.get(
+            f"{GOOGLE_SCRIPT_URL}?action=saveData&userId={user_id}&name={requests.utils.quote(full_name)}&username={requests.utils.quote(username)}&coins=0&spins=5",
+            timeout=5,
+        )
+    except Exception as e:
+        logging.error(f"Error registering user on start: {e}")
 
     keyboard = [
         [
@@ -105,7 +134,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     welcome_text = (
-        f"سلام {first_name} عزیز! 🌶 به گردونه شانس طلایی خوش آمدی.\n"
+        f"سلام {first_name} عزیز! 🌶 به گردونه شانس طلایی خوش آمدید.\n"
         f"از دکمه زیر برای ورود به مینی‌اپ استفاده کن:"
     )
 
@@ -124,7 +153,7 @@ async def handle_callback(
         await query.message.reply_text(RULES_TEXT, parse_mode="Markdown")
 
     elif query.data == "invite_friends":
-        referral_link = f"https://t.me/{BOT_USERNAME}?start=ref_{user_id}"
+        referral_link = f"https://t.me/{BOT_USERNAME}?start=ref_TG_{user_id}"
         share_keyboard = InlineKeyboardMarkup(
             [
                 [
@@ -139,7 +168,7 @@ async def handle_callback(
         invite_msg = (
             f"🎁 **لینک دعوت اختصاصی شما:**\n\n"
             f"`{referral_link}`\n\n"
-            f"با ارسال این لینک به دوستانت، با هر ثبت‌نام شانس چرخش اضافه دریافت کن! 🚀"
+            f"با ارسال این لینک به دوستانت، به ازای هر ورود بلافاصله ۲ شانس چرخش هدیه بگیر! 🚀"
         )
 
         await query.message.reply_text(
@@ -158,7 +187,6 @@ def main():
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CallbackQueryHandler(handle_callback))
 
-    # اجرای وب‌سرور Flask در یک ترد جداگانه
     web_thread = Thread(target=run_web)
     web_thread.daemon = True
     web_thread.start()

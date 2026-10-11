@@ -1,7 +1,7 @@
 import logging
 import os
 from threading import Thread
-from flask import Flask
+from flask import Flask, render_template
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, WebAppInfo
 from telegram.ext import (
     Application,
@@ -41,13 +41,13 @@ RULES_TEXT = """📜 **راهنما و قوانین بازی گردونه**
 5️⃣ **سلامت رقابت و قوانین:**
 برای حفظ عدالت، استفاده از چند اکانت (مولتی‌اکانت)، اکانت‌های فیک یا ربات‌های تقلب اکیداً ممنوع است. در صورت مشاهده، تمامی سکه‌ها و حساب کاربر متخلف مسدود خواهد شد."""
 
-# --- بخش وب‌سرور برای جلوگیری از تایم‌اوت در رندر ---
-app = Flask(__name__)
+# --- بخش وب‌سرور Flask برای لود کردن index.html ---
+app = Flask(__name__, template_folder=".")
 
 
 @app.route("/")
 def home():
-    return "Bot is running and Web App is alive!"
+    return render_template("index.html")
 
 
 def run_web():

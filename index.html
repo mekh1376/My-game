@@ -189,10 +189,10 @@
             border: 1px solid rgba(168, 85, 247, 0.3);
             border-radius: 20px;
             padding: 20px 15px;
-            width: 90%;
-            max-width: 340px;
+            width: 92%;
+            max-width: 350px;
             text-align: center;
-            max-height: 80vh;
+            max-height: 85vh;
             overflow-y: auto;
             box-shadow: 0 25px 50px rgba(0,0,0,0.8);
             position: relative;
@@ -231,15 +231,39 @@
         }
 
         .package-item {
-            background: #27164a;
-            border-radius: 10px;
-            padding: 12px;
-            margin-bottom: 8px;
+            background: linear-gradient(135deg, #27164a, #1f113a);
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            border-radius: 12px;
+            padding: 12px 14px;
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            cursor: pointer;
+            text-align: right;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .package-item:hover {
+            border-color: #fbbf24;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(251, 191, 36, 0.2);
+        }
+        .package-header {
             display: flex;
             justify-content: space-between;
-            cursor: pointer;
+            align-items: center;
             font-weight: bold;
-            border: 1px solid rgba(255,255,255,0.05);
+            font-size: 14px;
+            color: #fbbf24;
+        }
+        .package-desc {
+            font-size: 11px;
+            color: #cbd5e1;
+        }
+        .package-price {
+            color: #4ade80;
+            font-weight: bold;
         }
 
         .list-item {
@@ -306,13 +330,31 @@
         </div>
     </div>
 
-    <!-- پاپ‌آپ خرید -->
+    <!-- پاپ‌آپ خرید شانس -->
     <div id="buyModal" class="modal">
         <div class="modal-content">
-            <h3 style="margin-bottom:15px; color:#fbbf24;">انتخاب بسته شانس</h3>
-            <div class="package-item" onclick="buyPackage('۳ شانس', '۱۵,۰۰۰ تومان')"><span>۳ شانس</span><span>۱۵,۰۰۰ تومان</span></div>
-            <div class="package-item" onclick="buyPackage('۵ شانس', '۲۳,۰۰۰ تومان')"><span>۵ شانس</span><span>۲۳,۰۰۰ تومان</span></div>
-            <div class="package-item" onclick="buyPackage('۱۰ شانس', '۴۲,۰۰۰ تومان')"><span>۱۰ شانس</span><span>۴۲,۰۰۰ تومان</span></div>
+            <h3 style="margin-bottom:15px; color:#fbbf24; font-size:16px;">🛒 انتخاب بسته شانس</h3>
+            
+            <div class="package-item" onclick="buyPackage('بسته برنز (پایه)', '۳ شانس', '۱۹,۰۰۰ تومان')">
+                <div class="package-header"><span>بسته برنز (پایه)</span> <span class="package-price">۱۹,۰۰۰ تومان</span></div>
+                <div class="package-desc">۳ شانس چرخش</div>
+            </div>
+
+            <div class="package-item" onclick="buyPackage('بسته نقره‌ای (محبوب‌ترین ⭐)', '۷ شانس', '۲۹,۰۰۰ تومان')">
+                <div class="package-header"><span>بسته نقره‌ای ⭐</span> <span class="package-price">۲۹,۰۰۰ تومان</span></div>
+                <div class="package-desc">۷ شانس (۵ شانس + ۲ شانس رایگان هدیه)</div>
+            </div>
+
+            <div class="package-item" onclick="buyPackage('بسته طلایی (پیشنهاد ویژه ⚡)', '۱۵ شانس', '۵۹,۰۰۰ تومان')">
+                <div class="package-header"><span>بسته طلایی ⚡</span> <span class="package-price">۵۹,۰۰۰ تومان</span></div>
+                <div class="package-desc">۱۵ شانس (۱۰ شانس + ۵ شانس رایگان هدیه)</div>
+            </div>
+
+            <div class="package-item" onclick="buyPackage('بسته الماس 👑', '۳۲ شانس', '۱۱۹,۰۰۰ تومان')">
+                <div class="package-header"><span>بسته الماس 👑</span> <span class="package-price">۱۱۹,۰۰۰ تومان</span></div>
+                <div class="package-desc">۳۲ شانس (۲۰ شانس + ۱۱ شانس رایگان هدیه)</div>
+            </div>
+
             <button class="close-circle-btn" onclick="closeModal('buyModal')">✕</button>
         </div>
     </div>
@@ -339,7 +381,7 @@
     </div>
 
     <script>
-        const GOOGLE_URL = 'https://script.google.com/macros/s/AKfycbwY9iiHV_ohus1l229UnCWHzvjHGQLGZsRESlOGGpejORDD9rBJ5P2hOb9Cew0Kk6vzSg/exec';
+        const GOOGLE_URL = 'https://script.google.com/macros/s/AKfycbwkgKpi40lISqhTlYUyy61QImGxhBL722wKLQTl0z7vtFaXOMC-2KfrwsAgGJFH2dqV4A/exec';
         const BOT_USER = 'LuckiyiyBot';
         const SUPPORT_USER = 'luckiy_support';
 
@@ -391,11 +433,11 @@
                 userId = savedId;
             }
 
-            if (!userName) userName = 'کاربر ' + userId.replace('TG_', '');
+            if (!userName || userName === '') userName = 'کاربر ' + userId.replace('TG_', '');
             if (!userUsername) userUsername = 'Guest';
 
             const badge = document.getElementById('userBadge');
-            if (badge) badge.innerText = 'کاربر: ' + userName;
+            if (badge) badge.innerText = 'کاربر: ' + userName + (userUsername !== 'Guest' ? ' (' + userUsername + ')' : '');
         }
 
         function loadLocalData() {
@@ -512,11 +554,14 @@
                 if (data && data.status === 'found') {
                     coins = parseInt(data.coins) || 0;
                     spins = parseInt(data.spins) || 0;
-                    if (data.name && data.name.trim() !== '') {
+                    if (data.name && data.name.trim() !== '' && !data.name.includes('کاربر مهمان')) {
                         userName = data.name;
-                        const badge = document.getElementById('userBadge');
-                        if (badge) badge.innerText = 'کاربر: ' + userName;
                     }
+                    if (data.username && data.username.trim() !== '') {
+                        userUsername = data.username;
+                    }
+                    const badge = document.getElementById('userBadge');
+                    if (badge) badge.innerText = 'کاربر: ' + userName + (userUsername !== 'Guest' ? ' (' + userUsername + ')' : '');
                     saveState();
                 } else {
                     syncSheet();
@@ -610,6 +655,7 @@
                 if (u.userId === userId) {
                     u.coins = Math.max(parseInt(u.coins) || 0, coins);
                     if (userName && !userName.includes('کاربر مهمان')) u.name = userName;
+                    if (userUsername && userUsername !== 'Guest') u.username = userUsername;
                     userFoundInList = true;
                 }
             });
@@ -632,7 +678,9 @@
             
             let html = '';
             uniqueData.slice(0, 10).forEach((u, i) => {
-                const name = u.name && u.name.trim() !== '' ? u.name : (u.username || 'کاربر');
+                const rawName = u.name && u.name.trim() !== '' ? u.name : 'کاربر';
+                const uname = u.username && u.username !== 'Guest' ? ` (${u.username})` : '';
+                const displayName = rawName + uname;
                 const isMe = (u.userId === userId);
                 
                 let rankStyle = 'background: #231642; color: #e2e8f0;';
@@ -646,7 +694,7 @@
                 
                 html += `<div class="list-item" style="${rankStyle}">
                             <span class="rank-num">#${i + 1}</span>
-                            <span style="flex:1; text-align:right; padding-right:8px;">${name} ${isMe ? ' (شما)' : ''}</span>
+                            <span style="flex:1; text-align:right; padding-right:8px;">${displayName} ${isMe ? ' (شما)' : ''}</span>
                             <span style="font-weight:bold;">${u.coins || 0} سکه</span>
                          </div>`;
             });
@@ -716,15 +764,15 @@
         }
 
         function shareInvite() {
-            const inviteLink = `https://t.me/${BOT_USER}?start=${userId}`;
-            const txt = encodeURIComponent(`همین الان با این لینک وارد شو، گردونه رو بچرخون و سکه‌هاتو نقد کن! 🎯✨\n${inviteLink}`);
-            window.open(`https://t.me/share/url?url=${encodeURIComponent(inviteLink)}&text=${txt}`);
+            const inviteLink = `https://t.me/${BOT_USER}?start=ref_${userId}`;
+            const textMsg = `همین الان با این لینک وارد شو، گردونه رو بچرخون و سکه‌هاتو نقد کن! 🎯✨\nچند تا شانس رایگان داری، از دستش نده ⚡️\n\n${inviteLink}`;
+            window.open(`https://t.me/share/url?url=${encodeURIComponent(inviteLink)}&text=${encodeURIComponent(textMsg)}`);
         }
 
-        function buyPackage(p, pr) {
+        function buyPackage(packageName, spinsCount, price) {
             closeModal('buyModal');
-            const txt = encodeURIComponent(`درخواست خرید:\nنام: ${userName}\nشناسه: ${userId}\nبسته: ${p}\nقیمت: ${pr}`);
-            window.open(`https://t.me/${SUPPORT_USER}?text=${txt}`);
+            const message = `سلام، درخواست خرید شانس دارم 🛒\n\n👤 نام کاربر: ${userName}\n🆔 شناسه کاربری: ${userId}\n📦 بسته انتخابی: ${packageName}\n🎁 تعداد شانس: ${spinsCount}\n💰 مبلغ: ${price}\n\nلطفاً راهنمایی فرمایید.`;
+            window.open(`https://t.me/${SUPPORT_USER}?text=${encodeURIComponent(message)}`);
         }
     </script>
 </body>

@@ -134,7 +134,7 @@ def main():
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CallbackQueryHandler(handle_callback))
 
-    # اجرای وب‌سرور در یک ترد جداگانه
+    # اجرای وب‌سرور Flask در یک ترد جداگانه
     web_thread = Thread(target=run_web)
     web_thread.daemon = True
     web_thread.start()

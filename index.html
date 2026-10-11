@@ -381,7 +381,7 @@
     </div>
 
     <script>
-        const GOOGLE_URL = 'https://script.google.com/macros/s/AKfycbwkgKpi40lISqhTlYUyy61QImGxhBL722wKLQTl0z7vtFaXOMC-2KfrwsAgGJFH2dqV4A/exec';
+        const GOOGLE_URL = 'https://script.google.com/macros/s/AKfycby5DJDRm9goi47op6HAHA_nzb18ayo3daWADUGWJoOtsMU2P3DDaKz04uGPEQFPoZHnbQ/exec';
         const BOT_USER = 'LuckiyiyBot';
         const SUPPORT_USER = 'luckiy_support';
 
@@ -437,7 +437,7 @@
             if (!userUsername) userUsername = 'Guest';
 
             const badge = document.getElementById('userBadge');
-            if (badge) badge.innerText = 'کاربر: ' + userName + (userUsername !== 'Guest' ? ' (' + userUsername + ')' : '');
+            if (badge) badge.innerText = 'کاربر: ' + userName;
         }
 
         function loadLocalData() {
@@ -561,7 +561,7 @@
                         userUsername = data.username;
                     }
                     const badge = document.getElementById('userBadge');
-                    if (badge) badge.innerText = 'کاربر: ' + userName + (userUsername !== 'Guest' ? ' (' + userUsername + ')' : '');
+                    if (badge) badge.innerText = 'کاربر: ' + userName;
                     saveState();
                 } else {
                     syncSheet();
@@ -655,7 +655,6 @@
                 if (u.userId === userId) {
                     u.coins = Math.max(parseInt(u.coins) || 0, coins);
                     if (userName && !userName.includes('کاربر مهمان')) u.name = userName;
-                    if (userUsername && userUsername !== 'Guest') u.username = userUsername;
                     userFoundInList = true;
                 }
             });
@@ -678,9 +677,7 @@
             
             let html = '';
             uniqueData.slice(0, 10).forEach((u, i) => {
-                const rawName = u.name && u.name.trim() !== '' ? u.name : 'کاربر';
-                const uname = u.username && u.username !== 'Guest' ? ` (${u.username})` : '';
-                const displayName = rawName + uname;
+                const displayName = u.name && u.name.trim() !== '' ? u.name : 'کاربر';
                 const isMe = (u.userId === userId);
                 
                 let rankStyle = 'background: #231642; color: #e2e8f0;';

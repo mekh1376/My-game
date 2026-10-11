@@ -17,9 +17,9 @@ logging.basicConfig(
     level=logging.INFO,
 )
 
-# آدرس مینی‌اپ روی رندر و گوگل اسکریپت جدید
+# آدرس دقیق مینی‌اپ روی رندر و گوگل اسکریپت جدید
 WEB_APP_URL = "https://my-telegrambot-8vwc.onrender.com"
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwkgKpi40lISqhTlYUyy61QImGxhBL722wKLQTl0z7vtFaXOMC-2KfrwsAgGJFH2dqV4A/exec"
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby5DJDRm9goi47op6HAHA_nzb18ayo3daWADUGWJoOtsMU2P3DDaKz04uGPEQFPoZHnbQ/exec"
 CHANNEL_URL = "https://t.me/LuckiyiybotChannel"
 SUPPORT_URL = "https://t.me/luckiy_support"
 BOT_USERNAME = "LuckiyiyBot"

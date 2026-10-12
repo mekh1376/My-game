@@ -5,8 +5,10 @@ from flask import Flask, render_template, request, jsonify
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
+# تنظیمات لاگینگ
 logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO)
 
+# آدرس‌ها و اطلاعات ربات
 WEB_APP_URL = "https://my-telegrambot-8vwc.onrender.com"
 GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwMDIVf6-cRwYa5oQrggAo4AAzll_TVYvohpeQ45o6QHQtEy9Stm6ScE7JaGkj7CpPMxw/exec"
 CHANNEL_URL = "https://t.me/LuckiyiybotChannel"
@@ -14,6 +16,7 @@ SUPPORT_URL = "https://t.me/luckiy_support"
 BOT_USERNAME = "LuckiyiyBot"
 TOKEN = os.environ.get("BOT_TOKEN")
 
+# متن قوانین و مقررات
 RULES_TEXT = """📜 **راهنما و قوانین بازی گردونه**
 
 ✨ **به دنیای هیجان و جایزه خوش آمدید!**
@@ -33,12 +36,14 @@ RULES_TEXT = """📜 **راهنما و قوانین بازی گردونه**
 5️⃣ **سلامت رقابت و قوانین:**
 برای حفظ عدالت، استفاده از چند اکانت (مولتی‌اکانت)، اکانت‌های فیک یا ربات‌های تقلب اکیداً ممنوع است. در صورت مشاهده، تمامی سکه‌ها و حساب کاربر متخلف مسدود خواهد شد."""
 
+# راهنمای فلاس
 app = Flask(__name__, template_folder='.')
 
 telegram_app = None
 if TOKEN:
     telegram_app = Application.builder().token(TOKEN).build()
 
+# هندلر دستور استارت
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     user_id = f"TG_{user.id}"
@@ -87,6 +92,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await update.message.reply_text(welcome_text, parse_mode="Markdown", reply_markup=reply_markup)
 
+# هندلر دکمه‌های شیشه‌ای
 async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -107,6 +113,7 @@ if telegram_app:
     telegram_app.add_handler(CommandHandler("start", start))
     telegram_app.add_handler(CallbackQueryHandler(handle_callback))
 
+# مسیرهای وب‌سرور Flask
 @app.route('/')
 def home():
     try:
@@ -144,10 +151,7 @@ def get_winners():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
 
+# نقطه اجرای لوکال یا استارت دستی
 if __name__ == '__main__':
-    if TOKEN:
-        webhook_url = f"{WEB_APP_URL}/{TOKEN}"
-        try:
-            requests.get(f"https://api.telegram.org/bot{TOKEN}/setWebhook?url={webhook_url}")
-        except Exception as e:
-            print(f"Error setting webhook: {e}")
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host='0.0.0.0', port=port)

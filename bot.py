@@ -17,9 +17,9 @@ logging.basicConfig(
     level=logging.INFO,
 )
 
-# آدرس مینی‌اپ روی رندر و گوگل اسکریپت
+# آدرس دقیق مینی‌اپ روی رندر و گوگل اسکریپت جدید
 WEB_APP_URL = "https://my-telegrambot-8vwc.onrender.com"
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby5DJDRm9goi47op6HAHA_nzb18ayo3daWADUGWJoOtsMU2P3DDaKz04uGPEQFPoZHnbQ/exec"
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwMDIVf6-cRwYa5oQrggAo4AAzll_TVYvohpeQ45o6QHQtEy9Stm6ScE7JaGkj7CpPMxw/exec"
 CHANNEL_URL = "https://t.me/LuckiyiybotChannel"
 SUPPORT_URL = "https://t.me/luckiy_support"
 BOT_USERNAME = "LuckiyiyBot"
@@ -106,7 +106,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
         requests.get(
-            f"{GOOGLE_SCRIPT_URL}?action=saveData&userId={user_id}&name={requests.utils.quote(full_name)}&username={requests.utils.quote(username)}&coins=0&spins=5",
+            f"{GOOGLE_SCRIPT_URL}?action=saveData&userId={user_id}&name={requests.utils.quote(full_name)}&username={requests.utils.quote(username)}&coins=0&spins=5&targetTime=0",
             timeout=5,
         )
     except Exception as e:

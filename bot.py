@@ -5,13 +5,11 @@ from flask import Flask, jsonify, render_template, request
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, WebAppInfo
 from telegram.ext import Application, CallbackQueryHandler, CommandHandler, ContextTypes
 
-# تنظیمات لاگینگ
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     level=logging.INFO,
 )
 
-# آدرس دقیق مینی‌اپ روی رندر و گوگل اسکریپت
 WEB_APP_URL = "https://my-telegrambot-8vwc.onrender.com"
 GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwMDIVf6-cRwYa5oQrggAo4AAzll_TVYvohpeQ45o6QHQtEy9Stm6ScE7JaGkj7CpPMxw/exec"
 CHANNEL_URL = "https://t.me/LuckiyiybotChannel"
@@ -38,10 +36,8 @@ RULES_TEXT = """📜 **راهنما و قوانین بازی گردونه**
 5️⃣ **سلامت رقابت و قوانین:**
 برای حفظ عدالت، استفاده از چند اکانت (مولتی‌اکانت)، اکانت‌های فیک یا ربات‌های تقلب اکیداً ممنوع است. در صورت مشاهده، تمامی سکه‌ها و حساب کاربر متخلف مسدود خواهد شد."""
 
-# --- راه‌اندازی اپلیکیشن Flask ---
 app = Flask(__name__, template_folder=".")
 
-# راه‌اندازی ربات تلگرام
 telegram_app = None
 if TOKEN:
     telegram_app = Application.builder().token(TOKEN).build()
@@ -99,7 +95,8 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif query.data == "invite_friends":
         referral_link = f"https://t.me/{BOT_USERNAME}?start=ref_TG_{user_id}"
         share_text = f"همین الان با این لینک وارد شو، گردونه رو بچرخون و سکه‌هاتو نقد کن! 🎯✨\n\n{referral_link}"
-        share_keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("📲 اشتراک‌گذاری با دوستان", url=f"https://t.me/share/url?url={referral_link}&text={requests.utils.quote(share_text)}")]]))
+        share_url = f"https://t.me/share/url?url={referral_link}&text={requests.utils.quote(share_text)}"
+        share_keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("📲 اشتراک‌گذاری با دوستان", url=share_url)]])
         invite_msg = f"🎁 **لینک دعوت اختصاصی شما:**\n\n`{referral_link}`\n\nبا ارسال این لینک به دوستانت، به ازای هر ورود بلافاصله ۲ شانس چرخش هدیه بگیر! 🚀"
         await query.message.reply_text(invite_msg, parse_mode="Markdown", reply_markup=share_keyboard)
 
@@ -141,7 +138,6 @@ def get_winners():
 
 if __name__ == "__main__":
     if TOKEN and telegram_app:
-        # ست کردن خودکار وب‌هوک برای اتصال تلگرام به سرور رندر
         webhook_url = f"{WEB_APP_URL}/{TOKEN}"
         requests.get(f"https://api.telegram.org/bot{TOKEN}/setWebhook?url={webhook_url}")
         

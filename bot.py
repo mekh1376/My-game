@@ -5,6 +5,7 @@ from flask import Flask, jsonify, render_template, request
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, WebAppInfo
 from telegram.ext import Application, CallbackQueryHandler, CommandHandler, ContextTypes
 
+# تنظیمات لاگ
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     level=logging.INFO,
@@ -22,22 +23,20 @@ RULES_TEXT = """📜 **راهنما و قوانین بازی گردونه**
 ✨ **به دنیای هیجان و جایزه خوش آمدید!**
 
 1️⃣ **شانس‌های اولیه و روزانه:**
-در شروع بازی، **۵ شانس رایگان** به عنوان هدیه دریافت می‌کنید. علاوه بر این، هر ۲۴ ساعت یک‌بار، **۲ شانس رایگان جدید** به حساب شما اضافه می‌شود تا همیشه شانس برنده شدن داشته باشید!
+در شروع بازی، **۵ شانس رایگان** به عنوان هدیه دریافت می‌کنید. علاوه بر این، هر ۲۴ ساعت یک‌بار، **۲ شانس رایگان جدید** به حساب شما اضافه می‌شود!
 
-2️⃣ **دعوت از دوستان (شانس بی‌نهایت):**
-می‌خواهید بیشتر بچرخانید؟ با ارسال لینک اختصاصی خود به دوستانتان، به ازای هر ورود، **شانس چرخش اضافه و سکه رایگان** هدیه بگیرید. این سریع‌ترین راه برای بالا کشیدن خودتان در جدول رقابت است!
+2️⃣ **دعوت از دوستان:**
+با ارسال لینک اختصاصی خود به دوستانتان، به ازای هر ورود **۲ شانس چرخش اضافه** هدیه بگیرید!
 
-3️⃣ **بخش ویژه شانس‌خانه (خرید شانس):**
-اگر در یک قدمی رتبه‌های برتر هستید و شانس‌های رایگانتان تمام شده، می‌توانید از بخش فروشگاه/خرید، بسته‌های دلخواه شانس را تهیه کنید تا مسیر رسیدن به صدر جدول و جوایز بزرگ را شتاب ببخشید!
+3️⃣ **خرید شانس:**
+اگر شانس‌هایتان تمام شد، می‌توانید از بخش خرید شانس بسته‌های دلخواه را تهیه کنید.
 
-4️⃣ **جمع‌آوری سکه و جوایز ۳ نفر برتر:**
-با هر چرخش، سکه جمع کنید. در پایان هر دوره، **۳ نفر اول جدول رده‌بندی** جوایز ویژه را از آن خود می‌کنند! همچنین سکه‌ها شانس شما را در قرعه‌کشی‌های بزرگ دوره‌ای بالا می‌برند.
-
-5️⃣ **سلامت رقابت و قوانین:**
-برای حفظ عدالت، استفاده از چند اکانت (مولتی‌اکانت)، اکانت‌های فیک یا ربات‌های تقلب اکیداً ممنوع است. در صورت مشاهده، تمامی سکه‌ها و حساب کاربر متخلف مسدود خواهد شد."""
+4️⃣ **جوایز:**
+در پایان هر دوره، ۳ نفر اول جدول رده‌بندی جوایز ویژه را دریافت می‌کنند!"""
 
 app = Flask(__name__, template_folder=".")
 
+# ساخت اپلیکیشن تلگرام
 telegram_app = None
 if TOKEN:
     telegram_app = Application.builder().token(TOKEN).build()
@@ -73,7 +72,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             timeout=5,
         )
     except Exception as e:
-        logging.error(f"Error registering user on start: {e}")
+        logging.error(f"Error registering user: {e}")
 
     keyboard = [
         [InlineKeyboardButton("🎡 گردونه شانس", web_app=WebAppInfo(url=WEB_APP_URL))],
@@ -97,7 +96,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         share_text = f"همین الان با این لینک وارد شو، گردونه رو بچرخون و سکه‌هاتو نقد کن! 🎯✨\n\n{referral_link}"
         share_url = f"https://t.me/share/url?url={referral_link}&text={requests.utils.quote(share_text)}"
         share_keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("📲 اشتراک‌گذاری با دوستان", url=share_url)]])
-        invite_msg = f"🎁 **لینک دعوت اختصاصی شما:**\n\n`{referral_link}`\n\nبا ارسال این لینک به دوستانت، به ازای هر ورود بلافاصله ۲ شانس چرخش هدیه بگیر! 🚀"
+        invite_msg = f"🎁 **لینک دعوت اختصاصی شما:**\n\n`{referral_link}`\n\nبا ارسال این لینک به دوستانت، ۲ شانس چرخش هدیه بگیر! 🚀"
         await query.message.reply_text(invite_msg, parse_mode="Markdown", reply_markup=share_keyboard)
 
 if telegram_app:
@@ -116,8 +115,19 @@ def home():
 @app.route(f"/{TOKEN}", methods=["POST"])
 def webhook():
     if telegram_app and request.method == "POST":
+        import asyncio
         update = Update.de_json(request.get_json(force=True), telegram_app.bot)
-        telegram_app.update_queue.put(update)
+        
+        # پردازش همزمان پیام بدون ساختن event_loop دستی
+        async def process():
+            async with telegram_app:
+                await telegram_app.process_update(update)
+                
+        try:
+            asyncio.run(process())
+        except Exception as e:
+            logging.error(f"Error processing update: {e}")
+            
     return "OK", 200
 
 @app.route("/api/top-users", methods=["GET"])
@@ -137,12 +147,14 @@ def get_winners():
         return jsonify({"status": "error", "message": str(e)})
 
 if __name__ == "__main__":
-    if TOKEN and telegram_app:
+    if TOKEN:
+        # تنظیم وب‌هوک تلگرام
         webhook_url = f"{WEB_APP_URL}/{TOKEN}"
-        requests.get(f"https://api.telegram.org/bot{TOKEN}/setWebhook?url={webhook_url}")
-        
-        import asyncio
-        asyncio.get_event_loop().run_until_complete(telegram_app.initialize())
+        try:
+            requests.get(f"https://api.telegram.org/bot{TOKEN}/setWebhook?url={webhook_url}")
+            print("Webhook successfully set!")
+        except Exception as e:
+            print(f"Error setting webhook: {e}")
 
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)

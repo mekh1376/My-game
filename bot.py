@@ -17,7 +17,7 @@ logging.basicConfig(
     level=logging.INFO,
 )
 
-# آدرس دقیق مینی‌اپ روی رندر و گوگل اسکریپت جدید
+# آدرس مینی‌اپ روی رندر و گوگل اسکریپت
 WEB_APP_URL = "https://my-telegrambot-8vwc.onrender.com"
 GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby5DJDRm9goi47op6HAHA_nzb18ayo3daWADUGWJoOtsMU2P3DDaKz04uGPEQFPoZHnbQ/exec"
 CHANNEL_URL = "https://t.me/LuckiyiybotChannel"
@@ -185,6 +185,14 @@ def main():
     if not TOKEN:
         print("Error: BOT_TOKEN environment variable not set!")
         return
+
+    # پاکسازی خودکار وب‌هوک برای جلوگیری از قفل شدن ربات و پاسخ ندادن به استارت
+    try:
+        clear_url = f"https://api.telegram.org/bot{TOKEN}/deleteWebhook?drop_pending_updates=true"
+        requests.get(clear_url, timeout=10)
+        print("Webhook cleared successfully automatically.")
+    except Exception as e:
+        print(f"Error clearing webhook: {e}")
 
     application = Application.builder().token(TOKEN).build()
 

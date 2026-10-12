@@ -1,11 +1,10 @@
 import logging
 import os
 import requests
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, render_template_string
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, WebAppInfo
 from telegram.ext import Application, CallbackQueryHandler, CommandHandler, ContextTypes
 
-# تنظیمات لاگ
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     level=logging.INFO,
@@ -21,22 +20,10 @@ TOKEN = os.environ.get("BOT_TOKEN")
 RULES_TEXT = """📜 **راهنما و قوانین بازی گردونه**
 
 ✨ **به دنیای هیجان و جایزه خوش آمدید!**
-
-1️⃣ **شانس‌های اولیه و روزانه:**
-در شروع بازی، **۵ شانس رایگان** به عنوان هدیه دریافت می‌کنید. علاوه بر این، هر ۲۴ ساعت یک‌بار، **۲ شانس رایگان جدید** به حساب شما اضافه می‌شود!
-
-2️⃣ **دعوت از دوستان:**
-با ارسال لینک اختصاصی خود به دوستانتان، به ازای هر ورود **۲ شانس چرخش اضافه** هدیه بگیرید!
-
-3️⃣ **خرید شانس:**
-اگر شانس‌هایتان تمام شد، می‌توانید از بخش خرید شانس بسته‌های دلخواه را تهیه کنید.
-
-4️⃣ **جوایز:**
-در پایان هر دوره، ۳ نفر اول جدول رده‌بندی جوایز ویژه را دریافت می‌کنند!"""
+5 شانس رایگان اولیه دارید و با دعوت دوستان شانس بیشتری می‌گیرید."""
 
 app = Flask(__name__, template_folder=".")
 
-# ساخت اپلیکیشن تلگرام
 telegram_app = None
 if TOKEN:
     telegram_app = Application.builder().token(TOKEN).build()
@@ -45,44 +32,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     user_id = f"TG_{user.id}"
     first_name = user.first_name or "دوست"
-    last_name = user.last_name or ""
-    full_name = f"{first_name} {last_name}".strip()
-    username = f"@{user.username}" if user.username else "Guest"
-
-    if context.args:
-        arg = context.args[0]
-        inviter_id = None
-        if arg.startswith("ref_"):
-            inviter_id = arg.replace("ref_", "")
-        elif arg.startswith("TG_"):
-            inviter_id = arg
-
-        if inviter_id and inviter_id != user_id:
-            try:
-                requests.get(
-                    f"{GOOGLE_SCRIPT_URL}?action=addSpins&userId={inviter_id}&count=2",
-                    timeout=5,
-                )
-            except Exception as e:
-                logging.error(f"Error adding referral spins: {e}")
-
-    try:
-        requests.get(
-            f"{GOOGLE_SCRIPT_URL}?action=saveData&userId={user_id}&name={requests.utils.quote(full_name)}&username={requests.utils.quote(username)}&coins=0&spins=5&targetTime=0",
-            timeout=5,
-        )
-    except Exception as e:
-        logging.error(f"Error registering user: {e}")
-
+    
     keyboard = [
         [InlineKeyboardButton("🎡 گردونه شانس", web_app=WebAppInfo(url=WEB_APP_URL))],
         [InlineKeyboardButton("👥 دعوت از دوستان", callback_data="invite_friends"), InlineKeyboardButton("📢 کانال ما", url=CHANNEL_URL)],
         [InlineKeyboardButton("📜 راهنما و قوانین", callback_data="show_rules"), InlineKeyboardButton("💬 پشتیبانی", url=SUPPORT_URL)],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-
-    welcome_text = f"سلام {first_name} عزیز! 🌶 به گردونه شانس طلایی خوش آمدید.\nاز دکمه زیر برای ورود به مینی‌اپ استفاده کن:"
-    await update.message.reply_text(welcome_text, reply_markup=reply_markup)
+    await update.message.reply_text(f"سلام {first_name} عزیز! از دکمه زیر برای ورود به مینی‌اپ استفاده کن:", reply_markup=reply_markup)
 
 async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -93,11 +50,10 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.message.reply_text(RULES_TEXT, parse_mode="Markdown")
     elif query.data == "invite_friends":
         referral_link = f"https://t.me/{BOT_USERNAME}?start=ref_TG_{user_id}"
-        share_text = f"همین الان با این لینک وارد شو، گردونه رو بچرخون و سکه‌هاتو نقد کن! 🎯✨\n\n{referral_link}"
+        share_text = f"با این لینک وارد شو و گردونه رو بچرخون! 🎯\n\n{referral_link}"
         share_url = f"https://t.me/share/url?url={referral_link}&text={requests.utils.quote(share_text)}"
-        share_keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("📲 اشتراک‌گذاری با دوستان", url=share_url)]])
-        invite_msg = f"🎁 **لینک دعوت اختصاصی شما:**\n\n`{referral_link}`\n\nبا ارسال این لینک به دوستانت، ۲ شانس چرخش هدیه بگیر! 🚀"
-        await query.message.reply_text(invite_msg, parse_mode="Markdown", reply_markup=share_keyboard)
+        share_keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("📲 اشتراک‌گذاری", url=share_url)]])
+        await query.message.reply_text(f"لینک دعوت شما:\n`{referral_link}`", parse_mode="Markdown", reply_markup=share_keyboard)
 
 if telegram_app:
     telegram_app.add_handler(CommandHandler("start", start))
@@ -110,24 +66,23 @@ def add_header(response):
 
 @app.route("/")
 def home():
-    return render_template("index.html")
+    try:
+        return render_template("index.html")
+    except Exception as e:
+        return f"Template Error: {str(e)} - Make sure index.html is in root folder."
 
 @app.route(f"/{TOKEN}", methods=["POST"])
 def webhook():
     if telegram_app and request.method == "POST":
         import asyncio
         update = Update.de_json(request.get_json(force=True), telegram_app.bot)
-        
-        # پردازش همزمان پیام بدون ساختن event_loop دستی
         async def process():
             async with telegram_app:
                 await telegram_app.process_update(update)
-                
         try:
             asyncio.run(process())
         except Exception as e:
-            logging.error(f"Error processing update: {e}")
-            
+            logging.error(e)
     return "OK", 200
 
 @app.route("/api/top-users", methods=["GET"])
@@ -148,13 +103,11 @@ def get_winners():
 
 if __name__ == "__main__":
     if TOKEN:
-        # تنظیم وب‌هوک تلگرام
         webhook_url = f"{WEB_APP_URL}/{TOKEN}"
         try:
             requests.get(f"https://api.telegram.org/bot{TOKEN}/setWebhook?url={webhook_url}")
-            print("Webhook successfully set!")
         except Exception as e:
-            print(f"Error setting webhook: {e}")
+            print(e)
 
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)

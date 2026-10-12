@@ -1,22 +1,25 @@
 import os
 import logging
+import time
 import requests
+from threading import Thread
 from flask import Flask, render_template, request, jsonify
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
 # تنظیمات لاگینگ
-logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO)
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    level=logging.INFO,
+)
 
-# آدرس‌ها و اطلاعات ربات
+# آدرس دقیق مینی‌اپ روی رندر و گوگل اسکریپت
 WEB_APP_URL = "https://my-telegrambot-8vwc.onrender.com"
 GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwMDIVf6-cRwYa5oQrggAo4AAzll_TVYvohpeQ45o6QHQtEy9Stm6ScE7JaGkj7CpPMxw/exec"
 CHANNEL_URL = "https://t.me/LuckiyiybotChannel"
 SUPPORT_URL = "https://t.me/luckiy_support"
 BOT_USERNAME = "LuckiyiyBot"
-TOKEN = os.environ.get("BOT_TOKEN")
 
-# متن قوانین و مقررات
 RULES_TEXT = """📜 **راهنما و قوانین بازی گردونه**
 
 ✨ **به دنیای هیجان و جایزه خوش آمدید!**
@@ -36,14 +39,57 @@ RULES_TEXT = """📜 **راهنما و قوانین بازی گردونه**
 5️⃣ **سلامت رقابت و قوانین:**
 برای حفظ عدالت، استفاده از چند اکانت (مولتی‌اکانت)، اکانت‌های فیک یا ربات‌های تقلب اکیداً ممنوع است. در صورت مشاهده، تمامی سکه‌ها و حساب کاربر متخلف مسدود خواهد شد."""
 
-# راهنمای فلاس
-app = Flask(__name__, template_folder='.')
+# --- بخش وب‌سرور Flask ---
+app = Flask(__name__, template_folder=".")
 
-telegram_app = None
-if TOKEN:
-    telegram_app = Application.builder().token(TOKEN).build()
 
-# هندلر دستور استارت
+@app.after_request
+def add_header(response):
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    return response
+
+
+@app.route("/")
+def home():
+    try:
+        return render_template("index.html")
+    except Exception as e:
+        return f"Error loading index.html: {str(e)}"
+
+
+@app.route("/health", methods=["GET"])
+def health_check():
+    return jsonify({"status": "healthy", "service": "running"}), 200
+
+
+@app.route("/api/top-users", methods=["GET"])
+def get_top_users():
+    try:
+        response = requests.get(f"{GOOGLE_SCRIPT_URL}?action=getLeaderboard", timeout=10)
+        data = response.json()
+        return jsonify({"status": "success", "top_users": data})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+
+@app.route("/api/winners", methods=["GET"])
+def get_winners():
+    try:
+        response = requests.get(f"{GOOGLE_SCRIPT_URL}?action=getWinnersHistory", timeout=10)
+        data = response.json()
+        return jsonify({"status": "success", "winners": data})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+
+def run_web():
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port, debug=False, use_reloader=False)
+
+
+# --- بخش ربات تلگرام ---
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     user_id = f"TG_{user.id}"
@@ -75,12 +121,26 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             timeout=5,
         )
     except Exception as e:
-        logging.error(f"Error registering user: {e}")
+        logging.error(f"Error registering user on start: {e}")
 
     keyboard = [
-        [InlineKeyboardButton("🎡 گردونه شانس", web_app=WebAppInfo(url=WEB_APP_URL))],
-        [InlineKeyboardButton("👥 دعوت از دوستان", callback_data="invite_friends"), InlineKeyboardButton("📢 کانال ما", url=CHANNEL_URL)],
-        [InlineKeyboardButton("📜 راهنما و قوانین", callback_data="show_rules"), InlineKeyboardButton("💬 پشتیبانی", url=SUPPORT_URL)],
+        [
+            InlineKeyboardButton(
+                "🎡 گردونه شانس", web_app=WebAppInfo(url=WEB_APP_URL)
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                "👥 دعوت از دوستان", callback_data="invite_friends"
+            ),
+            InlineKeyboardButton("📢 کانال ما", url=CHANNEL_URL),
+        ],
+        [
+            InlineKeyboardButton(
+                "📜 راهنما و قوانین", callback_data="show_rules"
+            ),
+            InlineKeyboardButton("💬 پشتیبانی", url=SUPPORT_URL),
+        ],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -89,69 +149,80 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"🏆 آماده‌ای که شانس خودت رو امتحان کنی، سکه جمع کنی و برنده‌ی جوایز ویژه بشی؟\n"
         f"همین حالا از دکمه‌ی زیر وارد مینی‌اپ شو و گردونه رو بچرخون! 🚀"
     )
-    
+
     await update.message.reply_text(welcome_text, parse_mode="Markdown", reply_markup=reply_markup)
 
-# هندلر دکمه‌های شیشه‌ای
-async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+async def handle_callback(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+):
     query = update.callback_query
     await query.answer()
+
     user_id = query.from_user.id
 
     if query.data == "show_rules":
         await query.message.reply_text(RULES_TEXT, parse_mode="Markdown")
+
     elif query.data == "invite_friends":
         referral_link = f"https://t.me/{BOT_USERNAME}?start=ref_TG_{user_id}"
-        share_text = f"همین الان با این لینک وارد شو، گردونه رو بچرخون و سکه‌هاتو نقد کن! 🎯✨\n\n{referral_link}"
-        share_url = f"https://t.me/share/url?url={referral_link}&text={requests.utils.quote(share_text)}"
-        share_keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("📲 اشتراک‌گذاری با دوستان", url=share_url)]])
-        
-        invite_msg = f"🎁 **لینک دعوت اختصاصی شما:**\n\n`{referral_link}`\n\nبا ارسال این لینک به دوستانت، ۲ شانس چرخش هدیه بگیر! 🚀"
-        await query.message.reply_text(invite_msg, parse_mode="Markdown", reply_markup=share_keyboard)
+        share_text = (
+            f"همین الان با این لینک وارد شو، گردونه رو بچرخون و سکه‌هاتو نقد کن! 🎯✨\n"
+            f"چند تا شانس رایگان داری، از دستش نده ⚡️\n\n{referral_link}"
+        )
+        share_keyboard = InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        "📲 اشتراک‌گذاری با دوستان",
+                        url=f"https://t.me/share/url?url={referral_link}&text={requests.utils.quote(share_text)}",
+                    )
+                ]
+            ]
+        )
 
-if telegram_app:
-    telegram_app.add_handler(CommandHandler("start", start))
-    telegram_app.add_handler(CallbackQueryHandler(handle_callback))
+        invite_msg = (
+            f"🎁 **لینک دعوت اختصاصی شما:**\n\n"
+            f"`{referral_link}`\n\n"
+            f"با ارسال این لینک به دوستانت، به ازای هر ورود بلافاصله ۲ شانس چرخش هدیه بگیر! 🚀"
+        )
 
-# مسیرهای وب‌سرور Flask
-@app.route('/')
-def home():
+        await query.message.reply_text(
+            invite_msg, parse_mode="Markdown", reply_markup=share_keyboard
+        )
+
+
+def main():
+    TOKEN = os.environ.get("BOT_TOKEN")
+    if not TOKEN:
+        print("Error: BOT_TOKEN environment variable not set!")
+        return
+
+    # پاکسازی اجباری وب‌هوک و بستن نشست‌های قبلی تلگرام برای جلوگیری از خطای Conflict
+    print("Clearing webhook and resetting session...")
     try:
-        return render_template('index.html')
+        requests.get(
+            f"https://api.telegram.org/bot{TOKEN}/deleteWebhook?drop_pending_updates=true",
+            timeout=15,
+        )
+        time.sleep(3)
     except Exception as e:
-        return f"Error loading index.html: {str(e)}"
+        print(f"Error resetting webhook: {e}")
 
-@app.route(f'/{TOKEN}', methods=['POST'])
-def webhook():
-    if telegram_app and request.method == "POST":
-        import asyncio
-        update = Update.de_json(request.get_json(force=True), telegram_app.bot)
-        async def process():
-            async with telegram_app:
-                await telegram_app.process_update(update)
-        try:
-            asyncio.run(process())
-        except Exception as e:
-            logging.error(f"Error processing update: {e}")
-    return 'OK', 200
+    # راه اندازی وب‌سرور Flask در بک‌گراند (Threading)
+    web_thread = Thread(target=run_web)
+    web_thread.daemon = True
+    web_thread.start()
+    print("Web server started successfully in background.")
 
-@app.route('/api/top-users', methods=['GET'])
-def get_top_users():
-    try:
-        response = requests.get(f"{GOOGLE_SCRIPT_URL}?action=getLeaderboard", timeout=10)
-        return jsonify({"status": "success", "top_users": response.json()})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)})
+    # راه اندازی ربات تلگرام با پولینگ
+    application = Application.builder().token(TOKEN).build()
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CallbackQueryHandler(handle_callback))
 
-@app.route('/api/winners', methods=['GET'])
-def get_winners():
-    try:
-        response = requests.get(f"{GOOGLE_SCRIPT_URL}?action=getWinnersHistory", timeout=10)
-        return jsonify({"status": "success", "winners": response.json()})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)})
+    print("Bot is starting polling...")
+    application.run_polling(drop_pending_updates=True, allowed_updates=Update.ALL_TYPES)
 
-# نقطه اجرای لوکال یا استارت دستی
-if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host='0.0.0.0', port=port)
+
+if __name__ == "__main__":
+    main()

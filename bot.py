@@ -1,5 +1,6 @@
 import logging
 import os
+import time
 import requests
 from threading import Thread
 from flask import Flask, jsonify, render_template
@@ -87,7 +88,6 @@ def get_winners():
 
 def run_web():
     port = int(os.environ.get("PORT", 10000))
-    # استفاده از میزبان 0.0.0.0 برای پاسخگویی به درخواست‌های رندر
     app.run(host="0.0.0.0", port=port, debug=False, use_reloader=False)
 
 
@@ -199,27 +199,32 @@ def main():
         print("Error: BOT_TOKEN environment variable not set!")
         return
 
-    # پاکسازی وب‌هوک برای جلوگیری از تداخل
+    # پاکسازی اجباری وب‌هوک و بستن نشست‌های قبلی تلگرام برای جلوگیری از خطای Conflict
+    print("Clearing webhook and resetting session...")
     try:
-        clear_url = f"https://api.telegram.org/bot{TOKEN}/deleteWebhook?drop_pending_updates=true"
-        requests.get(clear_url, timeout=10)
-        print("Webhook cleared successfully automatically.")
+        requests.get(
+            f"https://api.telegram.org/bot{TOKEN}/deleteWebhook?drop_pending_updates=true",
+            timeout=15,
+        )
+        # مکث کوتاهی برای آزاد شدن کامل توکن در سرور تلگرام
+        time.sleep(3)
     except Exception as e:
-        print(f"Error clearing webhook: {e}")
+        print(f"Error resetting webhook: {e}")
 
-    # استارت کردن وب‌سرور Flask در ترد جداگانه
+    # راه اندازی وب‌سرور Flask در بک‌گراند
     web_thread = Thread(target=run_web)
     web_thread.daemon = True
     web_thread.start()
-    print("Web server started on background thread.")
+    print("Web server started successfully.")
 
-    # استارت کردن ربات تلگرام
+    # راه اندازی ربات تلگرام با پارامترهای ایمن‌تر
     application = Application.builder().token(TOKEN).build()
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CallbackQueryHandler(handle_callback))
 
-    print("Bot is running with polling...")
-    application.run_polling()
+    print("Bot is starting polling...")
+    # استفاده از drop_pending_updates برای رد کردن پیام‌های معلق قدیمی
+    application.run_polling(drop_pending_updates=True, allowed_updates=Update.ALL_TYPES)
 
 
 if __name__ == "__main__":

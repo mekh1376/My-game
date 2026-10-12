@@ -17,7 +17,7 @@ logging.basicConfig(
     level=logging.INFO,
 )
 
-# آدرس دقیق مینی‌اپ روی رندر و گوگل اسکریپت جدید
+# آدرس دقیق مینی‌اپ روی رندر و گوگل اسکریپت
 WEB_APP_URL = "https://my-telegrambot-8vwc.onrender.com"
 GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwMDIVf6-cRwYa5oQrggAo4AAzll_TVYvohpeQ45o6QHQtEy9Stm6ScE7JaGkj7CpPMxw/exec"
 CHANNEL_URL = "https://t.me/LuckiyiybotChannel"
@@ -50,12 +50,19 @@ app = Flask(__name__, template_folder=".")
 @app.after_request
 def add_header(response):
     response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
     return response
 
 
 @app.route("/")
 def home():
     return render_template("index.html")
+
+
+@app.route("/health", methods=["GET"])
+def health_check():
+    return jsonify({"status": "healthy", "service": "running"}), 200
 
 
 @app.route("/api/top-users", methods=["GET"])
@@ -80,7 +87,8 @@ def get_winners():
 
 def run_web():
     port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+    # استفاده از میزبان 0.0.0.0 برای پاسخگویی به درخواست‌های رندر
+    app.run(host="0.0.0.0", port=port, debug=False, use_reloader=False)
 
 
 # --- بخش ربات تلگرام ---
@@ -191,6 +199,7 @@ def main():
         print("Error: BOT_TOKEN environment variable not set!")
         return
 
+    # پاکسازی وب‌هوک برای جلوگیری از تداخل
     try:
         clear_url = f"https://api.telegram.org/bot{TOKEN}/deleteWebhook?drop_pending_updates=true"
         requests.get(clear_url, timeout=10)
@@ -198,16 +207,18 @@ def main():
     except Exception as e:
         print(f"Error clearing webhook: {e}")
 
-    application = Application.builder().token(TOKEN).build()
-
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CallbackQueryHandler(handle_callback))
-
+    # استارت کردن وب‌سرور Flask در ترد جداگانه
     web_thread = Thread(target=run_web)
     web_thread.daemon = True
     web_thread.start()
+    print("Web server started on background thread.")
 
-    print("Bot is running...")
+    # استارت کردن ربات تلگرام
+    application = Application.builder().token(TOKEN).build()
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CallbackQueryHandler(handle_callback))
+
+    print("Bot is running with polling...")
     application.run_polling()
 
 

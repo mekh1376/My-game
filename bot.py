@@ -47,6 +47,12 @@ RULES_TEXT = """📜 **راهنما و قوانین بازی گردونه**
 app = Flask(__name__, template_folder=".")
 
 
+@app.after_request
+def add_header(response):
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    return response
+
+
 @app.route("/")
 def home():
     return render_template("index.html")
@@ -86,7 +92,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     full_name = f"{first_name} {last_name}".strip()
     username = f"@{user.username}" if user.username else "Guest"
 
-    # بررسی لینک دعوت
     if context.args:
         arg = context.args[0]
         inviter_id = None
@@ -186,7 +191,6 @@ def main():
         print("Error: BOT_TOKEN environment variable not set!")
         return
 
-    # پاکسازی خودکار وب‌هوک برای جلوگیری از قفل شدن ربات و پاسخ ندادن به استارت
     try:
         clear_url = f"https://api.telegram.org/bot{TOKEN}/deleteWebhook?drop_pending_updates=true"
         requests.get(clear_url, timeout=10)

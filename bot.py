@@ -42,14 +42,13 @@ RULES_TEXT = """📜 **راهنما و قوانین بازی گردونه**
 # --- بخش وب‌سرور Flask ---
 app = Flask(__name__, template_folder=".")
 
-# راه‌اندازی اپلیکیشن تلگرام و ثبت هندلرها
+# راه‌اندازی اپلیکیشن تلگرام
 telegram_app = Application.builder().token(TOKEN).build()
 
-async def setup_bot():
+async def init_bot():
     await telegram_app.initialize()
 
-# اجرای راه‌اندازی اولیه در زمان لود ماژول
-asyncio.run(setup_bot())
+asyncio.run(init_bot())
 
 
 @app.after_request
@@ -75,12 +74,11 @@ def health_check():
 
 @app.route(f"/{TOKEN}", methods=["POST"])
 def webhook():
-    """مسیر استاندارد دریافت و پردازش آپدیت‌ها از تلگرام"""
+    """مسیر استاندارد دریافت آپدیت‌ها از تلگرام"""
     try:
         json_data = request.get_json(force=True)
         update = Update.de_json(json_data, telegram_app.bot)
         
-        # پردازش ایمن و کامل آپدیت در لوپ رویداد
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         loop.run_until_complete(telegram_app.process_update(update))
@@ -112,7 +110,7 @@ def get_winners():
         return jsonify({"status": "error", "message": str(e)})
 
 
-# --- بخش منطق ربات تلگرام ---
+# --- منطق ربات تلگرام ---
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     user_id = f"TG_{user.id}"
@@ -138,9 +136,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             except Exception as e:
                 logging.error(f"Error adding referral spins: {e}")
 
+    # ارسال فقط درخواست چک و ایجاد اولیه در صورت عدم وجود کاربر (بدون بازنویسی شانس و سکه)
     try:
         requests.get(
-            f"{GOOGLE_SCRIPT_URL}?action=saveData&userId={user_id}&name={requests.utils.quote(full_name)}&username={requests.utils.quote(username)}&coins=0&spins=5&targetTime=0",
+            f"{GOOGLE_SCRIPT_URL}?action=registerUserIfNotExist&userId={user_id}&name={requests.utils.quote(full_name)}&username={requests.utils.quote(username)}",
             timeout=5,
         )
     except Exception as e:

@@ -1,5 +1,6 @@
 import os
 import logging
+import asyncio
 import requests
 from flask import Flask, render_template, request, jsonify
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
@@ -41,8 +42,14 @@ RULES_TEXT = """📜 **راهنما و قوانین بازی گردونه**
 # --- بخش وب‌سرور Flask ---
 app = Flask(__name__, template_folder=".")
 
-# راه‌اندازی اپلیکیشن تلگرام برای وب‌هوک
+# راه‌اندازی اپلیکیشن تلگرام و ثبت هندلرها
 telegram_app = Application.builder().token(TOKEN).build()
+
+async def setup_bot():
+    await telegram_app.initialize()
+
+# اجرای راه‌اندازی اولیه در زمان لود ماژول
+asyncio.run(setup_bot())
 
 
 @app.after_request
@@ -68,14 +75,17 @@ def health_check():
 
 @app.route(f"/{TOKEN}", methods=["POST"])
 def webhook():
-    """مسیر دریافت آپدیت‌ها از تلگرام به روش وب‌هوک"""
+    """مسیر استاندارد دریافت و پردازش آپدیت‌ها از تلگرام"""
     try:
         json_data = request.get_json(force=True)
         update = Update.de_json(json_data, telegram_app.bot)
-        # اجرای ناهمگام آپدیت در رویداد لوپ تلگرام
-        import asyncio
-        asyncio.run(telegram_app.initialize())
-        asyncio.run(telegram_app.process_update(update))
+        
+        # پردازش ایمن و کامل آپدیت در لوپ رویداد
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(telegram_app.process_update(update))
+        loop.close()
+        
         return "OK", 200
     except Exception as e:
         logging.error(f"Error processing webhook update: {e}")
@@ -205,6 +215,6 @@ async def handle_callback(
         )
 
 
-# ثبت هندلرها روی اپلیکیشن تلگرام
+# ثبت هندلرها
 telegram_app.add_handler(CommandHandler("start", start))
 telegram_app.add_handler(CallbackQueryHandler(handle_callback))

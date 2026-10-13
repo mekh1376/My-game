@@ -1,8 +1,6 @@
 import os
 import logging
-import time
 import requests
-from threading import Thread
 from flask import Flask, render_template, request, jsonify
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
@@ -13,8 +11,9 @@ logging.basicConfig(
     level=logging.INFO,
 )
 
-# آدرس دقیق مینی‌اپ روی رندر و گوگل اسکریپت
-WEB_APP_URL = "https://my-telegrambot-8vwc.onrender.com"
+# تنظیمات اصلی
+TOKEN = "8805606726:AAGuhscLLpB_62z9WObavHagxIv7WEMH-F0"
+WEB_APP_URL = "https://09115789917.pythonanywhere.com/"
 GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwMDIVf6-cRwYa5oQrggAo4AAzll_TVYvohpeQ45o6QHQtEy9Stm6ScE7JaGkj7CpPMxw/exec"
 CHANNEL_URL = "https://t.me/LuckiyiybotChannel"
 SUPPORT_URL = "https://t.me/luckiy_support"
@@ -42,6 +41,9 @@ RULES_TEXT = """📜 **راهنما و قوانین بازی گردونه**
 # --- بخش وب‌سرور Flask ---
 app = Flask(__name__, template_folder=".")
 
+# راه‌اندازی اپلیکیشن تلگرام برای وب‌هوک
+telegram_app = Application.builder().token(TOKEN).build()
+
 
 @app.after_request
 def add_header(response):
@@ -64,6 +66,22 @@ def health_check():
     return jsonify({"status": "healthy", "service": "running"}), 200
 
 
+@app.route(f"/{TOKEN}", methods=["POST"])
+def webhook():
+    """مسیر دریافت آپدیت‌ها از تلگرام به روش وب‌هوک"""
+    try:
+        json_data = request.get_json(force=True)
+        update = Update.de_json(json_data, telegram_app.bot)
+        # اجرای ناهمگام آپدیت در رویداد لوپ تلگرام
+        import asyncio
+        asyncio.run(telegram_app.initialize())
+        asyncio.run(telegram_app.process_update(update))
+        return "OK", 200
+    except Exception as e:
+        logging.error(f"Error processing webhook update: {e}")
+        return "Error", 400
+
+
 @app.route("/api/top-users", methods=["GET"])
 def get_top_users():
     try:
@@ -84,12 +102,7 @@ def get_winners():
         return jsonify({"status": "error", "message": str(e)})
 
 
-def run_web():
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port, debug=False, use_reloader=False)
-
-
-# --- بخش ربات تلگرام ---
+# --- بخش منطق ربات تلگرام ---
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     user_id = f"TG_{user.id}"
@@ -192,37 +205,6 @@ async def handle_callback(
         )
 
 
-def main():
-    TOKEN = os.environ.get("BOT_TOKEN")
-    if not TOKEN:
-        print("Error: BOT_TOKEN environment variable not set!")
-        return
-
-    # پاکسازی اجباری وب‌هوک و بستن نشست‌های قبلی تلگرام برای جلوگیری از خطای Conflict
-    print("Clearing webhook and resetting session...")
-    try:
-        requests.get(
-            f"https://api.telegram.org/bot{TOKEN}/deleteWebhook?drop_pending_updates=true",
-            timeout=15,
-        )
-        time.sleep(3)
-    except Exception as e:
-        print(f"Error resetting webhook: {e}")
-
-    # راه اندازی وب‌سرور Flask در بک‌گراند (Threading)
-    web_thread = Thread(target=run_web)
-    web_thread.daemon = True
-    web_thread.start()
-    print("Web server started successfully in background.")
-
-    # راه اندازی ربات تلگرام با پولینگ
-    application = Application.builder().token(TOKEN).build()
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CallbackQueryHandler(handle_callback))
-
-    print("Bot is starting polling...")
-    application.run_polling(drop_pending_updates=True, allowed_updates=Update.ALL_TYPES)
-
-
-if __name__ == "__main__":
-    main()
+# ثبت هندلرها روی اپلیکیشن تلگرام
+telegram_app.add_handler(CommandHandler("start", start))
+telegram_app.add_handler(CallbackQueryHandler(handle_callback))

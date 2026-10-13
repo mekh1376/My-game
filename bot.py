@@ -6,16 +6,14 @@ from flask import Flask, render_template, request, jsonify
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
-# تنظیمات لاگینگ
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     level=logging.INFO,
 )
 
-# تنظیمات اصلی
 TOKEN = "8805606726:AAGuhscLLpB_62z9WObavHagxIv7WEMH-F0"
 WEB_APP_URL = "https://09115789917.pythonanywhere.com/"
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwMDIVf6-cRwYa5oQrggAo4AAzll_TVYvohpeQ45o6QHQtEy9Stm6ScE7JaGkj7CpPMxw/exec"
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwCbbByVoH8dyKBfiqJ6GkSm66KZJT3rrEwFxRY1UTmY5-TZMs0BB0hCmfWNsHMVCrY3Q/exec"
 CHANNEL_URL = "https://t.me/LuckiyiybotChannel"
 SUPPORT_URL = "https://t.me/luckiy_support"
 BOT_USERNAME = "LuckiyiyBot"
@@ -39,17 +37,14 @@ RULES_TEXT = """📜 **راهنما و قوانین بازی گردونه**
 5️⃣ **سلامت رقابت و قوانین:**
 برای حفظ عدالت، استفاده از چند اکانت (مولتی‌اکانت)، اکانت‌های فیک یا ربات‌های تقلب اکیداً ممنوع است. در صورت مشاهده، تمامی سکه‌ها و حساب کاربر متخلف مسدود خواهد شد."""
 
-# --- بخش وب‌سرور Flask ---
 app = Flask(__name__, template_folder=".")
 
-# راه‌اندازی اپلیکیشن تلگرام
 telegram_app = Application.builder().token(TOKEN).build()
 
 async def init_bot():
     await telegram_app.initialize()
 
 asyncio.run(init_bot())
-
 
 @app.after_request
 def add_header(response):
@@ -58,7 +53,6 @@ def add_header(response):
     response.headers["Access-Control-Allow-Headers"] = "Content-Type"
     return response
 
-
 @app.route("/")
 def home():
     try:
@@ -66,15 +60,12 @@ def home():
     except Exception as e:
         return f"Error loading index.html: {str(e)}"
 
-
 @app.route("/health", methods=["GET"])
 def health_check():
     return jsonify({"status": "healthy", "service": "running"}), 200
 
-
 @app.route(f"/{TOKEN}", methods=["POST"])
 def webhook():
-    """مسیر استاندارد دریافت آپدیت‌ها از تلگرام"""
     try:
         json_data = request.get_json(force=True)
         update = Update.de_json(json_data, telegram_app.bot)
@@ -89,7 +80,6 @@ def webhook():
         logging.error(f"Error processing webhook update: {e}")
         return "Error", 400
 
-
 @app.route("/api/top-users", methods=["GET"])
 def get_top_users():
     try:
@@ -98,7 +88,6 @@ def get_top_users():
         return jsonify({"status": "success", "top_users": data})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
-
 
 @app.route("/api/winners", methods=["GET"])
 def get_winners():
@@ -109,8 +98,6 @@ def get_winners():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
 
-
-# --- منطق ربات تلگرام ---
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     user_id = f"TG_{user.id}"
@@ -136,7 +123,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             except Exception as e:
                 logging.error(f"Error adding referral spins: {e}")
 
-    # ارسال فقط درخواست چک و ایجاد اولیه در صورت عدم وجود کاربر (بدون بازنویسی شانس و سکه)
     try:
         requests.get(
             f"{GOOGLE_SCRIPT_URL}?action=registerUserIfNotExist&userId={user_id}&name={requests.utils.quote(full_name)}&username={requests.utils.quote(username)}",
@@ -173,7 +159,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
     await update.message.reply_text(welcome_text, parse_mode="Markdown", reply_markup=reply_markup)
-
 
 async def handle_callback(
     update: Update, context: ContextTypes.DEFAULT_TYPE
@@ -213,7 +198,5 @@ async def handle_callback(
             invite_msg, parse_mode="Markdown", reply_markup=share_keyboard
         )
 
-
-# ثبت هندلرها
 telegram_app.add_handler(CommandHandler("start", start))
 telegram_app.add_handler(CallbackQueryHandler(handle_callback))

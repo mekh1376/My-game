@@ -381,7 +381,7 @@
     </div>
 
     <script>
-        const GOOGLE_URL = 'https://script.google.com/macros/s/AKfycbwMDIVf6-cRwYa5oQrggAo4AAzll_TVYvohpeQ45o6QHQtEy9Stm6ScE7JaGkj7CpPMxw/exec';
+        const GOOGLE_URL = 'https://script.google.com/macros/s/AKfycbwCbbByVoH8dyKBfiqJ6GkSm66KZJT3rrEwFxRY1UTmY5-TZMs0BB0hCmfWNsHMVCrY3Q/exec';
         const BOT_USER = 'LuckiyiyBot';
         const SUPPORT_USER = 'luckiy_support';
 
@@ -547,7 +547,6 @@
         function fetchUserDataJSONP() {
             let loaded = false;
             
-            // تایم‌اوت ۳ ثانیه‌ای برای باز شدن اپلیکیشن بدون گیر کردن روی حالت دریافت
             const fallbackTimeout = setTimeout(() => {
                 if (!loaded) {
                     updateUI();
@@ -562,7 +561,8 @@
                 
                 if (data && data.status === 'found') {
                     coins = parseInt(data.coins) || 0;
-                    spins = parseInt(data.spins) || 0;
+                    spins = parseInt(data.spins);
+                    if (isNaN(spins)) spins = 5;
                     targetTime = parseInt(data.targetTime) || 0;
                     
                     if (data.name && data.name.trim() !== '' && !data.name.includes('کاربر مهمان')) {
@@ -672,18 +672,12 @@
                 return;
             }
 
-            let userFoundInList = false;
             data.forEach(u => {
                 if (u.userId === userId) {
                     u.coins = Math.max(parseInt(u.coins) || 0, coins);
                     if (userName && !userName.includes('کاربر مهمان')) u.name = userName;
-                    userFoundInList = true;
                 }
             });
-
-            if (!userFoundInList) {
-                data.push({ userId: userId, name: userName, username: userUsername, coins: coins });
-            }
 
             const uniqueData = [];
             const seenIds = new Set();

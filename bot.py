@@ -39,12 +39,8 @@ RULES_TEXT = """📜 **راهنما و قوانین بازی گردونه**
 
 app = Flask(__name__, template_folder=".")
 
+# ساخت اپلیکیشن تلگرام
 telegram_app = Application.builder().token(TOKEN).build()
-
-async def init_bot():
-    await telegram_app.initialize()
-
-asyncio.run(init_bot())
 
 @app.after_request
 def add_header(response):
@@ -70,11 +66,12 @@ def webhook():
         json_data = request.get_json(force=True)
         update = Update.de_json(json_data, telegram_app.bot)
         
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(telegram_app.process_update(update))
-        loop.close()
-        
+        # پردازش ایمن آپدیت در یک لوپ مستقل برای هر درخواست
+        async def process():
+            await telegram_app.initialize()
+            await telegram_app.process_update(update)
+
+        asyncio.run(process())
         return "OK", 200
     except Exception as e:
         logging.error(f"Error processing webhook update: {e}")
